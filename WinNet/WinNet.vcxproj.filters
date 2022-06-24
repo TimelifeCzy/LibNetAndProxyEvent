@@ -39,12 +39,6 @@
     <ClCompile Include="UDPProxy.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Sync.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ThreadJobSource.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="ThreadPool.cpp">
       <Filter>源文件</Filter>
     </ClCompile>

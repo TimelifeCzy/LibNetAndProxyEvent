@@ -1,5 +1,6 @@
 #pragma once
 #include "IOCPHandler.h"
+#include "Sync.h"
 #include <list>
 
 class IOCPService
@@ -17,13 +18,14 @@ protected:
 	void DispatchCompletionThread();
 	static unsigned int WINAPI _workerThread(void* pThis)
 	{
-		((IOCPService*)pThis)->DispatchCompletionThread();
+		(reinterpret_cast<IOCPService*>(pThis))->DispatchCompletionThread();
 		return 0;
 	}
 
 private:
 	HANDLE m_hIOCP = nullptr;
 	HANDLE m_hStopEvnet = nullptr;
+	AutoHandle   m_workThread;
 	// iocp handler ptr
 	IOCPHandler* m_pHandler = nullptr;
 	std::list<HANDLE> IoThreadHandleList;

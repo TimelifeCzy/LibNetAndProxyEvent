@@ -150,9 +150,7 @@
     <ClCompile Include="IOCPService.cpp" />
     <ClCompile Include="LocalTCPPRoxy.cpp" />
     <ClCompile Include="MemPool.cpp" />
-    <ClCompile Include="Sync.cpp" />
     <ClCompile Include="TCPProxy.cpp" />
-    <ClCompile Include="ThreadJobSource.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="UDPProxy.cpp" />
     <ClCompile Include="WinNet.cpp" />

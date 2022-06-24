@@ -99,6 +99,7 @@ bool IOCPService::iocpSvcFree()
 		CloseHandle(m_hIOCP);
 		m_hIOCP = INVALID_HANDLE_VALUE;
 	}
+	return true;
 }
 
 bool IOCPService::iocpSvcRegisterSocket(SOCKET s)
