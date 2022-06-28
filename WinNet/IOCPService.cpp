@@ -76,7 +76,7 @@ bool IOCPService::iocpSvcInit(IOCPHandler* pHandler, int numOfIoThreads)
 bool IOCPService::iocpSvcFree()
 {
 	SetEvent(m_hStopEvnet);
-	unsigned workingThreadCount = IoThreadHandleList.size();
+	size_t workingThreadCount = IoThreadHandleList.size();
 	std::list<HANDLE>::iterator iter;
 	while (workingThreadCount > 0)
 	{
