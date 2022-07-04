@@ -98,6 +98,8 @@ public:
 	virtual void free();
 	bool initExtensions();
 	bool StartAccept(int ipFamily);
+	bool startClose(SOCKET socket, __int64 id);
+	bool StartConnect(SOCKET socket, sockaddr* pAddr, int addrLen, __int64 id);
 
 protected:
 	OV_DATA* newOV_DATA()
@@ -119,10 +121,18 @@ protected:
 	virtual void execute() override;
 	virtual void threadStarted() override;
 	virtual void threadStopped() override;
+	// IocpComplet
+	void onAcceptComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error);
+	void onConnectComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error);
+	void onSendComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error);
+	void onReceiveComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error);
+	void onClose(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error);
+	void SetKeepAliveVals(SOCKET s);
 
 private:
 	IOCPService m_service;
 	ThreadPool m_pool;
+	DWORD m_timeout;
 
 	SOCKET m_listenSocket;
 	SOCKET m_acceptSocket;
@@ -137,4 +147,7 @@ private:
 	LPFN_GETACCEPTEXSOCKADDRS m_pGetAcceptExSockaddrs;
 
 	AutoCriticalSection m_cs;
+
+	LIST_ENTRY	m_eventList;
+	AutoCriticalSection m_csEventList;
 };

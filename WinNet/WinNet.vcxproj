@@ -161,6 +161,7 @@
     <ClInclude Include="EventQueue.h" />
     <ClInclude Include="IOCPHandler.h" />
     <ClInclude Include="IOCPService.h" />
+    <ClInclude Include="linkedlist.h" />
     <ClInclude Include="LocalTCPPRoxy.h" />
     <ClInclude Include="MemPool.h" />
     <ClInclude Include="Sync.h" />
