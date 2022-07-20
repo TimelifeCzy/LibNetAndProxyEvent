@@ -1,0 +1,3 @@
+/libevent/libproxyevent/LinuxNet/build/CMakeFiles/rebuild_cache.dir
+/libevent/libproxyevent/LinuxNet/build/CMakeFiles/edit_cache.dir
+/libevent/libproxyevent/LinuxNet/build/CMakeFiles/unixpory.dir
