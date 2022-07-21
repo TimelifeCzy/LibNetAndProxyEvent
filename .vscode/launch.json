@@ -1,0 +1,29 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) 启动", //会显示在debug界面的debug名称
+            "type": "cppdbg", //指定debug的类型
+            "request": "launch",
+            "program": "/libevent/libproxyevent/LinuxNet/build/unixpory", // 对应编译生成的可执行文件，该可执行文件在编译的时候记得带-g参数（生成可调式信息）
+            "args": [], // 可执行文件带有的参数，根据可执行文件需要填写
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}", // gdb程序的工作目录
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb", // debug 使用的程序
+            "setupCommands": [
+                {
+                    "description": "为 gdb 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/usr/bin/gdb",
+            "miDebuggerServerAddress": "10.128.130.189:8888"
+        }
+    ]
+}
