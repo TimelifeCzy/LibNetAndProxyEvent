@@ -23,7 +23,7 @@
                 }
             ],
             "miDebuggerPath": "/usr/bin/gdb",
-            "miDebuggerServerAddress": "10.128.130.189:8888"
+            "miDebuggerServerAddress": "192.168.130.189:8888"
         }
     ]
 }
