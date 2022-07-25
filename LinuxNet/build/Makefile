@@ -123,6 +123,33 @@ unixpory/fast:
 	$(MAKE) -f CMakeFiles/unixpory.dir/build.make CMakeFiles/unixpory.dir/build
 .PHONY : unixpory/fast
 
+libevent/libproxyevent/LinuxNet/AsioService.o: libevent/libproxyevent/LinuxNet/AsioService.cpp.o
+
+.PHONY : libevent/libproxyevent/LinuxNet/AsioService.o
+
+# target to build an object file
+libevent/libproxyevent/LinuxNet/AsioService.cpp.o:
+	$(MAKE) -f CMakeFiles/unixpory.dir/build.make CMakeFiles/unixpory.dir/libevent/libproxyevent/LinuxNet/AsioService.cpp.o
+.PHONY : libevent/libproxyevent/LinuxNet/AsioService.cpp.o
+
+libevent/libproxyevent/LinuxNet/AsioService.i: libevent/libproxyevent/LinuxNet/AsioService.cpp.i
+
+.PHONY : libevent/libproxyevent/LinuxNet/AsioService.i
+
+# target to preprocess a source file
+libevent/libproxyevent/LinuxNet/AsioService.cpp.i:
+	$(MAKE) -f CMakeFiles/unixpory.dir/build.make CMakeFiles/unixpory.dir/libevent/libproxyevent/LinuxNet/AsioService.cpp.i
+.PHONY : libevent/libproxyevent/LinuxNet/AsioService.cpp.i
+
+libevent/libproxyevent/LinuxNet/AsioService.s: libevent/libproxyevent/LinuxNet/AsioService.cpp.s
+
+.PHONY : libevent/libproxyevent/LinuxNet/AsioService.s
+
+# target to generate assembly for a file
+libevent/libproxyevent/LinuxNet/AsioService.cpp.s:
+	$(MAKE) -f CMakeFiles/unixpory.dir/build.make CMakeFiles/unixpory.dir/libevent/libproxyevent/LinuxNet/AsioService.cpp.s
+.PHONY : libevent/libproxyevent/LinuxNet/AsioService.cpp.s
+
 libevent/libproxyevent/LinuxNet/LinuxNet.o: libevent/libproxyevent/LinuxNet/LinuxNet.cpp.o
 
 .PHONY : libevent/libproxyevent/LinuxNet/LinuxNet.o
@@ -150,6 +177,33 @@ libevent/libproxyevent/LinuxNet/LinuxNet.cpp.s:
 	$(MAKE) -f CMakeFiles/unixpory.dir/build.make CMakeFiles/unixpory.dir/libevent/libproxyevent/LinuxNet/LinuxNet.cpp.s
 .PHONY : libevent/libproxyevent/LinuxNet/LinuxNet.cpp.s
 
+libevent/libproxyevent/LinuxNet/NSession.o: libevent/libproxyevent/LinuxNet/NSession.cpp.o
+
+.PHONY : libevent/libproxyevent/LinuxNet/NSession.o
+
+# target to build an object file
+libevent/libproxyevent/LinuxNet/NSession.cpp.o:
+	$(MAKE) -f CMakeFiles/unixpory.dir/build.make CMakeFiles/unixpory.dir/libevent/libproxyevent/LinuxNet/NSession.cpp.o
+.PHONY : libevent/libproxyevent/LinuxNet/NSession.cpp.o
+
+libevent/libproxyevent/LinuxNet/NSession.i: libevent/libproxyevent/LinuxNet/NSession.cpp.i
+
+.PHONY : libevent/libproxyevent/LinuxNet/NSession.i
+
+# target to preprocess a source file
+libevent/libproxyevent/LinuxNet/NSession.cpp.i:
+	$(MAKE) -f CMakeFiles/unixpory.dir/build.make CMakeFiles/unixpory.dir/libevent/libproxyevent/LinuxNet/NSession.cpp.i
+.PHONY : libevent/libproxyevent/LinuxNet/NSession.cpp.i
+
+libevent/libproxyevent/LinuxNet/NSession.s: libevent/libproxyevent/LinuxNet/NSession.cpp.s
+
+.PHONY : libevent/libproxyevent/LinuxNet/NSession.s
+
+# target to generate assembly for a file
+libevent/libproxyevent/LinuxNet/NSession.cpp.s:
+	$(MAKE) -f CMakeFiles/unixpory.dir/build.make CMakeFiles/unixpory.dir/libevent/libproxyevent/LinuxNet/NSession.cpp.s
+.PHONY : libevent/libproxyevent/LinuxNet/NSession.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -159,9 +213,15 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... unixpory"
+	@echo "... libevent/libproxyevent/LinuxNet/AsioService.o"
+	@echo "... libevent/libproxyevent/LinuxNet/AsioService.i"
+	@echo "... libevent/libproxyevent/LinuxNet/AsioService.s"
 	@echo "... libevent/libproxyevent/LinuxNet/LinuxNet.o"
 	@echo "... libevent/libproxyevent/LinuxNet/LinuxNet.i"
 	@echo "... libevent/libproxyevent/LinuxNet/LinuxNet.s"
+	@echo "... libevent/libproxyevent/LinuxNet/NSession.o"
+	@echo "... libevent/libproxyevent/LinuxNet/NSession.i"
+	@echo "... libevent/libproxyevent/LinuxNet/NSession.s"
 .PHONY : help
 
 

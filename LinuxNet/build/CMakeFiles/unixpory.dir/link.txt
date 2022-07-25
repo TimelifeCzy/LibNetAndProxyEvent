@@ -1,1 +1,0 @@
-/usr/bin/c++     CMakeFiles/unixpory.dir/libevent/libproxyevent/LinuxNet/LinuxNet.cpp.o  -o unixpory   -L/libevent/libproxyevent/boost/stage/lib  -Wl,-rpath,/libevent/libproxyevent/boost/stage/lib -Wl,-Bstatic -lboost_system -lboost_thread -Wl,-Bdynamic -lpthread 
