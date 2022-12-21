@@ -1,7 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\LinuxNet",
+    "\\WinNet"
   ],
-  "SelectedNode": "\\WinNet.sln",
+  "SelectedNode": "\\LinuxNet\\LinuxNet.cpp",
   "PreviewInSolutionExplorer": false
 }

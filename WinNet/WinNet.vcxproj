@@ -164,11 +164,15 @@
     <ClInclude Include="linkedlist.h" />
     <ClInclude Include="LocalTCPPRoxy.h" />
     <ClInclude Include="MemPool.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Sync.h" />
     <ClInclude Include="TCPProxy.h" />
     <ClInclude Include="ThreadJobSource.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="UDPProxy.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="libproxyevent.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

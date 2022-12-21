@@ -1,0 +1,5 @@
+boost
+.vs
+WinNet\x64
+WinNet\Debug
+WinNet\Release

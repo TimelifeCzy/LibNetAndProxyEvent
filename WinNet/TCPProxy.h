@@ -116,18 +116,18 @@ protected:
 	}
 
 	// ¼Ì³Ðiocphandler
-	virtual void onComplete(SOCKET socket, DWORD dwTransferred, OVERLAPPED* pOverlapped, int error) override;
+	virtual void onComplete(const SOCKET socket, DWORD dwTransferred, OVERLAPPED* pOverlapped, int error) override;
 	// ¼Ì³ÐThread
 	virtual void execute() override;
 	virtual void threadStarted() override;
 	virtual void threadStopped() override;
 	// IocpComplet
-	void onAcceptComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error);
-	void onConnectComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error);
-	void onSendComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error);
-	void onReceiveComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error);
-	void onClose(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error);
-	void SetKeepAliveVals(SOCKET s);
+	void onAcceptComplete(const SOCKET socket, const DWORD dwTransferred, OV_DATA* const pov, const int error);
+	void onConnectComplete(const SOCKET socket, const DWORD dwTransferred, OV_DATA* const pov, const int error);
+	void onSendComplete(const SOCKET socket, const DWORD dwTransferred, OV_DATA* const pov, const int error);
+	void onReceiveComplete(const SOCKET socket, const DWORD dwTransferred, OV_DATA* const pov, const int error);
+	void onClose(const SOCKET socket, const DWORD dwTransferred, OV_DATA* pov, const int error);
+	void setKeepAliveVals(const SOCKET s);
 
 private:
 	IOCPService m_service;

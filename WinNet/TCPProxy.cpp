@@ -115,33 +115,6 @@ bool TCPProxy::initExtensions()
 
 	return m_pAcceptEx != NULL && m_pConnectEx != NULL && m_pGetAcceptExSockaddrs != NULL;
 }
-
-void TCPProxy::SetKeepAliveVals(SOCKET s)
-{
-	tcp_keepalive tk;
-	DWORD dwRet;
-
-	{
-		AutoLock lock(m_cs);
-
-		tk.onoff = 1;
-		tk.keepalivetime = m_timeout;
-		tk.keepaliveinterval = 1000;
-	}
-
-	int err = WSAIoctl(s, SIO_KEEPALIVE_VALS,
-		(LPVOID)&tk,
-		(DWORD)sizeof(tk),
-		NULL,
-		0,
-		(LPDWORD)&dwRet,
-		NULL,
-		NULL);
-	if (err != 0)
-	{
-		OutputDebugString(L"TCPProxy::setKeepAliveVals WSAIoctl");
-	}
-}
 bool TCPProxy::StartAccept(int ipFamily)
 {
 	SOCKET s  =WSASocket(ipFamily, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
@@ -193,7 +166,7 @@ bool TCPProxy::startClose(SOCKET socket, __int64 id)
 	return true;
 }
 
-void TCPProxy::onAcceptComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error)
+void TCPProxy::onAcceptComplete(const SOCKET socket, const DWORD dwTransferred, OV_DATA* const pov, const int error)
 {// client 连接本地代理成功
 	SOCKET acceptSocket;
 	int ipFamily;
@@ -219,10 +192,18 @@ void TCPProxy::onAcceptComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov
 		return;
 	}
 
+	BOOL val = 1;
+	m_service.iocpSvcRegisterSocket(acceptSocket);
+	setsockopt(acceptSocket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&m_listenSocket, sizeof(m_listenSocket));
+	setsockopt(acceptSocket, IPPROTO_TCP, TCP_NODELAY, (char*)&val, sizeof(val));
+	setsockopt(acceptSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&val, sizeof(val));
+
+	setKeepAliveVals(acceptSocket);
+
 	sockaddr* pLocalAddr = NULL;
 	sockaddr* pRemoteAddr = NULL;
-	int localAddrLen, remoteAddrLen;
-	char	realRemoteAddress[NF_MAX_ADDRESS_LENGTH];
+	int localAddrLen = 0, remoteAddrLen = 0;
+	char realRemoteAddress[NF_MAX_ADDRESS_LENGTH] = { 0, };
 
 	m_pGetAcceptExSockaddrs(pov->packetList[0].buffer.buf,
 		0,
@@ -235,24 +216,12 @@ void TCPProxy::onAcceptComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov
 
 	{
 	}
-
-	BOOL val = 1;
-	m_service.iocpSvcRegisterSocket(acceptSocket);
-	setsockopt(acceptSocket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&m_listenSocket, sizeof(m_listenSocket));
-	setsockopt(acceptSocket, IPPROTO_TCP, TCP_NODELAY, (char*)&val, sizeof(val));
-	setsockopt(acceptSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&val, sizeof(val));
-	SetKeepAliveVals(acceptSocket);
-	
-	{
-	
-	}
-
 	if (!StartAccept(ipFamily))
 	{
 		OutputDebugString(L"TCPProxy::startAccept() failed");
 	}
 }
-void TCPProxy::onConnectComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error)
+void TCPProxy::onConnectComplete(const SOCKET socket, const DWORD dwTransferred, OV_DATA* const pov, const int error)
 {
 	if (error != 0)
 	{
@@ -261,16 +230,49 @@ void TCPProxy::onConnectComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* po
 		return;
 	}
 
+	const BOOL val = 1;
+	setsockopt(socket, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
+	setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (char*)&val, sizeof(val));
+	setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, (char*)&val, sizeof(val));
+
+	setKeepAliveVals(socket);
+
 }
-void TCPProxy::onSendComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error)
+void TCPProxy::onSendComplete(const SOCKET socket, const DWORD dwTransferred, OV_DATA* const pov, const int error)
 {
 	
 }
-void TCPProxy::onReceiveComplete(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error)
+void TCPProxy::onReceiveComplete(const SOCKET socket, const DWORD dwTransferred, OV_DATA* const pov, const int error)
 {
 }
-void TCPProxy::onClose(SOCKET socket, DWORD dwTransferred, OV_DATA* pov, int error)
+void TCPProxy::onClose(const SOCKET socket, const DWORD dwTransferred, OV_DATA* const pov, const int error)
 {
+}
+void TCPProxy::setKeepAliveVals(const SOCKET s)
+{
+	tcp_keepalive tk;
+	DWORD dwRet;
+
+	{
+		AutoLock lock(m_cs);
+
+		tk.onoff = 1;
+		tk.keepalivetime = m_timeout;
+		tk.keepaliveinterval = 1000;
+	}
+
+	int err = WSAIoctl(s, SIO_KEEPALIVE_VALS,
+		(LPVOID)&tk,
+		(DWORD)sizeof(tk),
+		NULL,
+		0,
+		(LPDWORD)&dwRet,
+		NULL,
+		NULL);
+	if (err != 0)
+	{
+		// "TCPProxy::setKeepAliveVals WSAIoctl err=%d", WSAGetLastError();
+	}
 }
 
 // Local Proxy Init
@@ -279,7 +281,7 @@ bool TCPProxy::init(unsigned short port, bool bindToLocalhost, int threadCount)
 	bool result = false;
 	m_port = port;
 
-	if (!initExtensions())\
+	if (!initExtensions())
 	{
 		OutputDebugString(L"TCPProxy::init initExtensions() failed");
 		return false;
