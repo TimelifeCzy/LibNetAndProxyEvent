@@ -135,7 +135,7 @@ bool TCPProxy::StartAccept(int ipFamily)
 	{
 		m_acceptSocket_IPv6 = s;
 	}
-
+	
 	if (!m_pAcceptEx( (ipFamily == AF_INET) ? m_listenSocket : m_listenSocket_IPv6, 
 		s, 
 		pov->packetList[0].buffer.buf,

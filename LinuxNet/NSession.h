@@ -1,6 +1,5 @@
 #pragma one
-#include <memory>
-#include <boost/asio.hpp>
+#include "Utiliy.h"
 
 using boost::asio::ip::tcp;
 
@@ -16,4 +15,7 @@ public:
 
     tcp::socket  m_socketLocal;
 	tcp::socket  m_socketRemote;
+
+private:
+    NF_TCP_CONN_INFO    m_ci;
 };

@@ -7,9 +7,15 @@
 using namespace std;
 
 static sem_t g_sem;
-static unsigned WINAPI start_routine(void* )
+static void* start_routine(void* vParm)
 {
-	sem_wait(&sem);
+	// Asio Server WorkItem
+	boost::asio::io_context asio_ctx;
+	std::shared_ptr<AsioService> SvcSock = std::make_shared<AsioService>(asio_ctx);
+	SvcSock->AsioRegisterSocket();
+	
+	// Waiting Exit Event
+	sem_wait(&g_sem);
 }
 
 int main()
@@ -23,6 +29,5 @@ int main()
 		pthread_join(pthr,NULL);
 		sem_destroy(&g_sem);
 	}
-	AsioService obj;
 	return 0;
 }
