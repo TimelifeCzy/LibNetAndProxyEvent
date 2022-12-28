@@ -2,6 +2,11 @@
 #include <memory>
 #include <mutex>
 
+AsioService::AsioService()
+{
+    AsioSvcInit();
+}
+
 AsioService::~AsioService()
 {
 }
@@ -15,8 +20,36 @@ const bool AsioService::AsioSvcInit()
     memset(m_recvBufLocal, 0, sizeof(m_recvBufLocal));
     return true;
 }
+
 const bool AsioService::AsioSvcFree()
 {
+    try
+    {
+        if(m_AcceptIpv4)
+        {
+            m_AcceptIpv4->cancel();
+            m_AcceptIpv4->close();
+            delete m_AcceptIpv4;
+            m_AcceptIpv4 = nullptr;
+        }
+        if(m_AcceptIpv6)
+        {
+            m_AcceptIpv6->cancel();
+            m_AcceptIpv6->close();
+            delete m_AcceptIpv6;
+            m_AcceptIpv6 = nullptr;
+        }
+
+        m_io_context.stop();
+        for (std::size_t i = 0; i < m_threads.size(); ++i)
+            m_threads[i]->join();
+        m_threads.clear();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }    
     return true;
 }
 
@@ -66,24 +99,25 @@ void AsioService::Recv_local_complete(const boost::system::error_code& error, co
 }
 
 void AsioService::Accept_HandlerIpv4(const boost::system::error_code& ec, const sock_ptr sock)
+{
+    std::cout << "IP:" << sock->remote_endpoint().address() << " Accept_HandlerIpv4" << std::endl;
+    if(ec)
     {
-        if(ec)
-        {
-            std::cout << "IP:" << sock->remote_endpoint().address() << "断开连接" << std::endl;
-            sock->close();
-            return;
-        }
+        std::cout << "IP:" << sock->remote_endpoint().address() << "断开连接" << std::endl;
+        sock->close();
+        return;
+    }
 
-        sock->async_read_some(boost::asio::buffer(m_recvBufLocal, sizeof(m_recvBufLocal)),
-            boost::bind(
-                &AsioService::Recv_local_complete, 
-                this,
-                boost::asio::placeholders::error,
-                boost::asio::placeholders::bytes_transferred,
-                sock));
-        
-        // 发送完毕后继续监听，否则io_service将认为没有事件处理而结束运行 
-        StartAcceptIpv4();
+    sock->async_read_some(boost::asio::buffer(m_recvBufLocal, sizeof(m_recvBufLocal)),
+        boost::bind(
+            &AsioService::Recv_local_complete, 
+            this,
+            boost::asio::placeholders::error,
+            boost::asio::placeholders::bytes_transferred,
+            sock));
+    
+    // 发送完毕后继续监听，否则io_service将认为没有事件处理而结束运行 
+    StartAcceptIpv4();
 }
 
 void AsioService::StartAcceptIpv4()
@@ -92,6 +126,7 @@ void AsioService::StartAcceptIpv4()
     {
         if(!m_AcceptIpv4)
             return;
+        std::cout << "StartAcceptIpv4" << std::endl;
         sock_ptr sock(new sock_t(m_io_context));
         // Accept Client Notify Ipv4
         m_AcceptIpv4->async_accept(*sock, boost::bind(&AsioService::Accept_HandlerIpv4, this, boost::asio::placeholders::error, sock));
@@ -118,7 +153,7 @@ void AsioService::StartAcceptIpv6()
 const bool AsioService::AsioRegisterSocket()
 {
     // Init Asio Object Ipv4
-    for (m_portIPv4 = 8080; m_portIPv4 < 8180; ++m_portIPv4)
+    for (m_portIPv4 = 5555; m_portIPv4 < 5557; ++m_portIPv4)
     {
         try
         {
@@ -133,10 +168,11 @@ const bool AsioService::AsioRegisterSocket()
         break;
     }
 
+
     // Init Asio Object Ipv6
     // for(m_portIPv6 = 8180; m_portIPv6 < 8120; ++m_portIPv6)
     // {
-
+        
     //     try
     //     {
     //         m_AcceptIpv6 = new tcp::acceptor(m_io_context, tcp::endpoint(tcp::v6(), m_portIPv6));
@@ -149,5 +185,12 @@ const bool AsioService::AsioRegisterSocket()
     //     StartAcceptIpv6();
     //     break;
     // }
+    
+    for (std::size_t i = 0; i < 2; ++i)
+    {
+        std::shared_ptr<std::thread> thread(new std::thread(
+            boost::bind(&boost::asio::io_context::run, &m_io_context)));
+        m_threads.push_back(thread);
+    }
     return true;
 }

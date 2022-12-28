@@ -6,14 +6,15 @@
 #include <sys/socket.h>
 #include <iostream>
 #include <stdio.h>
+#include <vector>
 #include <memory>
+#include <thread>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
-#define BOOST_BIND_GLOBAL_PLACEHOLDERS
 
 #define PACKET_LEN	8192
 #define NF_MAX_ADDRESS_LENGTH		28
