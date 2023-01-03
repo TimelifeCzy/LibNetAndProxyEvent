@@ -14,7 +14,7 @@ LINK_DIRECTORIES("/github/libproxyevent/boost/stage/lib/")
 # 将源代码添加到此项目的可执行文件。
 add_executable (unixpory "../LinuxNet.cpp" "../LinuxNet.h" "../AsioService.cpp" "../AsioService.h")
 
-target_link_libraries(unixpory libboost_system.a libboost_thread.a lboost_system-mt.a)
+target_link_libraries(unixpory libboost_system.a libboost_thread.a)
 target_link_libraries(unixpory pthread dl)
 
-
+add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)

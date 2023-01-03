@@ -59,42 +59,63 @@ void AsioService::Recv_local_complete(const boost::system::error_code& error, co
     {
         if(error)
         {
-            std::cout << "IP:" << sock->remote_endpoint().address() << "断开连接" << std::endl;
+            std::cout << "Recv IP:" << sock->remote_endpoint().address() << "断开连接" << std::endl;
             sock->close();
             return;
         }
 
         if (bytes_transferred > 0)
         {
-            std::cout<< "IP:" << sock->remote_endpoint().address() << " 发来数据:" << m_recvBufLocal << std::endl;
-            // DbgPrint("NFSession::recv_local_complete[%s] %d", m_recvBufLocal, bytes_transferred);
-            // std::cout << "Session::Recv_local_complete " << m_recvBufLocal << " Lens: " << bytes_transferred << std::endl;
+            const int iRecvlen = strlen(m_recvBufLocal);
+            const int iRecvSize = sizeof(m_recvBufLocal);
+            std::cout<< "Recv IP:" << sock->remote_endpoint().address() << " 发来数据:" << m_recvBufLocal << std::endl;
             sock->async_read_some( 
-                boost::asio::buffer(m_recvBufLocal, sizeof(m_recvBufLocal)),
+                boost::asio::buffer(m_recvBufLocal, iRecvSize),
                 boost::bind(&AsioService::Recv_local_complete, this,
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred,
                     sock));
 
             // Send To Client
-            // const std::string& msg = "Client Hello";
-            // const auto write_size = (uint32_t)msg.size();
-            // std::array<boost::asio::const_buffer, 2> write_buffers;
-            // write_buffers[0] = boost::asio::buffer(&write_size, sizeof(uint32_t));
-            // write_buffers[1] = boost::asio::buffer(msg.data(), write_size);
-            // boost::asio::async_write(sock, write_buffers,
-            //     [this](boost::system::error_code ec, std::size_t length) {
-            //     if (ec) {
-            //         std::cout << ec.message() << '\n';
-            //         return;
-            //     }
-            // std::unique_lock<std::mutex> lock(m_wirteck);
-            //});
+            {
+                std::unique_lock<std::mutex> lock(m_wirteck);
+                m_sendBufRemote.push(tBuffer_ptr(new tBuffer(m_recvBufLocal, m_recvBufLocal+iRecvlen)));
+            }
+
+            sock->async_write_some(
+                    boost::asio::buffer(&(*m_sendBufRemote.front())[0], m_sendBufRemote.front()->size()),
+                    boost::bind(
+                        &AsioService::Send_remote_complete, 
+                        this,
+                        boost::asio::placeholders::error,
+                        boost::asio::placeholders::bytes_transferred,
+                        sock));
         }
     }
     catch(const std::exception& e)
     {
         std::cerr << e.what() << '\n';
+    }
+}
+
+void AsioService::Send_remote_complete(const boost::system::error_code& error, size_t bytes_transferred,  const sock_ptr sock)
+{
+    try
+    {
+        {
+            std::unique_lock<std::mutex> lock(m_wirteck);
+            if (!m_sendBufRemote.empty())
+                m_sendBufRemote.pop();
+        }
+        if(error)
+        {
+            std::cout << "Send IP:" << sock->remote_endpoint().address() << "断开连接" << std::endl;
+            sock->close();
+            return;
+        }
+    }
+    catch(...)
+    {
     }
 }
 
@@ -108,7 +129,8 @@ void AsioService::Accept_HandlerIpv4(const boost::system::error_code& ec, const 
         return;
     }
 
-    sock->async_read_some(boost::asio::buffer(m_recvBufLocal, sizeof(m_recvBufLocal)),
+    sock->async_read_some(
+        boost::asio::buffer(m_recvBufLocal, sizeof(m_recvBufLocal)),
         boost::bind(
             &AsioService::Recv_local_complete, 
             this,
@@ -126,7 +148,6 @@ void AsioService::StartAcceptIpv4()
     {
         if(!m_AcceptIpv4)
             return;
-        std::cout << "StartAcceptIpv4" << std::endl;
         sock_ptr sock(new sock_t(m_io_context));
         // Accept Client Notify Ipv4
         m_AcceptIpv4->async_accept(*sock, boost::bind(&AsioService::Accept_HandlerIpv4, this, boost::asio::placeholders::error, sock));

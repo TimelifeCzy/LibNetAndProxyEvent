@@ -25,6 +25,7 @@ protected:
     void StartAcceptIpv6();
     void Accept_HandlerIpv4(const boost::system::error_code& ec, const sock_ptr sock);
     void Recv_local_complete(const boost::system::error_code& error, const size_t bytes_transferred, const sock_ptr sock);
+    void Send_remote_complete(const boost::system::error_code& error, size_t bytes_transferred,  const sock_ptr sock);
 
 private:
     tcp::acceptor * m_AcceptIpv4;
@@ -34,4 +35,10 @@ private:
     char m_recvBufLocal[PACKET_LEN];
     boost::asio::io_context m_io_context;
     std::vector<std::shared_ptr<std::thread>> m_threads;
+    
+    std::mutex m_wirteck;
+    typedef std::vector<char> tBuffer;
+	typedef boost::shared_ptr<tBuffer> tBuffer_ptr;
+    typedef std::queue<tBuffer_ptr> tBuffers;
+    tBuffers m_sendBufRemote;
 };
