@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.8.2)
+cmake_minimum_required (VERSION 3.29.0)
 
 project(unixpory VERSION 1.0)
 
@@ -8,8 +8,8 @@ SET(CMAKE_BUILD_TYPE "Debug")
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
 SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 
-include_directories("/github/libproxyevent/boost/")
-LINK_DIRECTORIES("/github/libproxyevent/boost/stage/lib/")
+include_directories("../../include/")
+LINK_DIRECTORIES("../../lib/boost/")
 
 # 将源代码添加到此项目的可执行文件。
 add_executable (unixpory "../LinuxNet.cpp" "../LinuxNet.h" "../AsioService.cpp" "../AsioService.h")

@@ -38,5 +38,4 @@ typedef struct _NF_TCP_CONN_INFO
 } NF_TCP_CONN_INFO, *PNF_TCP_CONN_INFO;
 
 
-
 #endif

@@ -4,6 +4,7 @@
 #include "LinuxNet.h"
 #include "AsioService.h"
 #include <semaphore.h>
+#include <memory>
 using namespace std;
 
 // static sem_t g_sem;
