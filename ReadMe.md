@@ -17,6 +17,6 @@ guard or redirection config: https://github.com/theSecHunter/Hades-Windows/blob/
 #### proxy
 ##### ebpf
 ```
-barnch def-ebpf
+barnch dev-ebpf
 ```
 #### Rudp 
