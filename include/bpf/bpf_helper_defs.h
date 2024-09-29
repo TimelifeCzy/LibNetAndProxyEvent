@@ -1,4 +1,6 @@
 /* This is auto-generated file. See bpf_doc.py for details. */
+#ifndef BPF_HELPER_DEFS_H
+#define BPF_HELPER_DEFS_H
 
 /* Forward declarations of BPF structs */
 struct bpf_fib_lookup;
@@ -4763,4 +4765,4 @@ static void *(*bpf_cgrp_storage_get)(void *map, struct cgroup *cgroup, void *val
  */
 static long (*bpf_cgrp_storage_delete)(void *map, struct cgroup *cgroup) = (void *) 211;
 
-
+#endif
