@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.29.0)
+cmake_minimum_required (VERSION 3.28.0)
 
 project(ebpftrace VERSION 1.0)
 
@@ -8,12 +8,13 @@ SET(CMAKE_BUILD_TYPE "Debug")
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
 SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 
-include_directories("../../include/")
+include_directories("../include/")
 include_directories("./core/")
-LINK_DIRECTORIES("../../lib/bpf/")
+
+LINK_DIRECTORIES("../lib/bpf/")
 
 # 将源代码添加到此项目的可执行文件。
-add_executable (ebpftrace "../main.c" "../Utiliy.h" )
+add_executable (ebpftrace "main.cpp" "Utiliy.h" )
 
 target_link_libraries(ebpftrace libbpf.a)
 target_link_libraries(ebpftrace pthread dl)

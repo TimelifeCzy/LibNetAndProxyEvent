@@ -13,11 +13,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-//#include <linux/bpf.h>
-#include <bpf/bpf.h>
-#include <bpf/libbpf.h>
-#include <bpf/bpf_helpers.h>
-
 #define EXEC_CMD_LEN 128
 #define PACKET_LEN	8192
 #define NF_MAX_ADDRESS_LENGTH		28
