@@ -7,6 +7,7 @@
 #include <string.h>
 #include <time.h>
 #include <errno.h>
+#include <iostream>
 #include <sys/resource.h>
 
 #include <sys/types.h>
