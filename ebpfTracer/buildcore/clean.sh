@@ -6,3 +6,8 @@ rm -rf ./ebpftrace*
 rm -rf ../core/traceEngin.bpf.o
 rm -rf ../core/traceEngin.ebpf.o
 rm -rf ../core/traceEngin.skel.h
+rm -rf ./traceEngin.bpf.o
+rm -rf ./traceEngin.ebpf.o
+rm -rf ./traceEngin.skel.h
+rm -rf ../../include/traceEngin.skel.h
+rm -rf ../../lib/traceEngin.ebpf.o
