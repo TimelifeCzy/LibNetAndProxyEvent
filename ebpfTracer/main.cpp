@@ -1,8 +1,6 @@
 #include "Utiliy.h"
 #include "traceEngin.skel.h"
 
-#include <bits/struct_stat.h>
-
 struct TraceEnginConfiguration
 {
     // Enable
