@@ -3,6 +3,7 @@ rm -rf ./cmake_install.cmake
 rm -rf ./CMakeFiles
 rm -rf ./Makefile
 rm -rf ./ebpftrace*
+rm -rf ./libebpftrace*
 rm -rf ../buildcore/traceEngin.bpf.o
 rm -rf ../buildcore/traceEngin.ebpf.o
 rm -rf ../buildcore/traceEngin.skel.h

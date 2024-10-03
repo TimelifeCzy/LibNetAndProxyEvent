@@ -1,0 +1,41 @@
+cmake_minimum_required (VERSION 3.28.0)
+
+project(ebpftrace VERSION 1.0)
+
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 11)
+SET(CMAKE_BUILD_TYPE "Debug")
+# SET(CMAKE_BUILD_TYPE "Release")
+SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
+SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
+
+include_directories("../include/")
+
+LINK_DIRECTORIES("../lib/")
+LINK_DIRECTORIES("../lib/bpf/")
+
+# exec buildcore
+SET(DIRECTORY_PATH "/project/LibNetAndProxyEvent/ebpfTracer/buildcore/")
+execute_process (COMMAND bash ${DIRECTORY_PATH}clean.sh WORKING_DIRECTORY ${DIRECTORY_PATH})
+execute_process (COMMAND bash ${DIRECTORY_PATH}build.sh WORKING_DIRECTORY ${DIRECTORY_PATH})
+
+# build ebpftrace.a
+add_library(ebpftrace   "Utiliy.h"
+                        "EbpfTraceEngine.h" "EbpfTraceEngine.cpp"
+                        "Monitor.h" "Monitor.cpp" 
+)
+# build ebpftrace.so
+# add_library(ebpftrace   SHARED 
+#                         "Utiliy.h"
+#                         "EbpfTraceEngine.h" "EbpfTraceEngine.cpp"
+#                         "Monitor.h" "Monitor.cpp" 
+# )
+
+# set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+# install(TARGETS ebpftrace LIBRARY DESTINATION /usr/local/ebpftrac/lib)
+# install(FILES EbpfTraceEngine.h DESTINATION /usr/local/ebpftrace/include)
+
+target_link_libraries(ebpftrace libbpf.a elf z)
+target_link_libraries(ebpftrace pthread dl)
+
+add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)

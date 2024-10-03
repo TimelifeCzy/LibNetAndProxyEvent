@@ -4,7 +4,7 @@ branch dev-ebpf
 
 ### LinuxNet:
 ```
-基于Asio实现Tcp_Server/Udp_Server，基于Ebpf实现代理转发。
+基于Asio实现Tcp_Server/Udp_Server，基于Ebpf实现包捕获，重注。
 ```
 
 #### sys environment
@@ -32,31 +32,29 @@ config:
 ebpfTracer: 
     desc: bpf tc hook c++ .so .a
     - buildcore:
-        - unittest build bpf *.c
+        desc: build bpf *.c to traceEngin.skel.h
     - core:
         desc: src bpf *.c
+    - unitts
+        desc: unit test bpf debug exec
 include:
 lib:
-LinuxNet:
-    desc: C++ proxy src
+logging:
+    desc: log
+src:
+    desc: C++ Proxy src
 ```
 
-#### build
+##### build ebpfTracer
+```
+cd ebpfTracer/build
+cmake ..
+make
+```
+
+#### build proxy
 ```
 cd build
 cmake ..
 make
 ```
-
-##### ebpfTracer
-```
-cd build
-cmake ..
-make
-
-buildcore
-./clean.sh
-./build.sh
-```
-
-#### Rudp 
