@@ -30,7 +30,7 @@ const int sys_enter_execve(struct trace_event_raw_sys_enter* ctx)
     e->ns = bpf_ktime_get_ns();
 
     bpf_ringbuf_submit(e, 0);
-    // bpf_printk("TRACEPOINT EXEC pid = %d, uid = %d, cmd = %s\n", pid, uid, e->cmd);
+    bpf_printk("TRACEPOINT EXEC pid = %d, uid = %d, cmd = %s\n", pid, uid, e->cmd);
     return 0;
 }
 
@@ -67,7 +67,7 @@ int snoop_process_exit(struct trace_event_raw_sched_process_template* ctx)
     bpf_get_current_comm(&e->cmd, sizeof(e->cmd));
 
     bpf_ringbuf_submit(e, 0);
-    // bpf_printk("TRACEPOINT EXIT pid = %d, uid = %d, cmd = %s\n", pid, uid, e->cmd);
+    bpf_printk("TRACEPOINT EXIT pid = %d, uid = %d, cmd = %s\n", pid, uid, e->cmd);
     return 0;
 }
 
