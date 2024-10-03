@@ -46,9 +46,17 @@ src:
 ```
 
 ##### build ebpfTracer
+libebpftrace: Compile first, Build create file to libebpftrace.so or libebpftrace.a
 ```
 cd ebpfTracer/build
 cmake ..
+make
+```
+
+unitts: build to exec file, test libebpftrace.so or libebpftrace.a
+```
+cd ebpfTracer/unitts
+cmake .
 make
 ```
 

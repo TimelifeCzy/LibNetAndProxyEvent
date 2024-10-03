@@ -10,29 +10,6 @@ EbpfTraceEngine::~EbpfTraceEngine()
 {
 }
 
-int EbpfTraceEngine::CreateThread(struct TraceEnginConfiguration* self, enum TriggerType triggerType, void* (*monitorThread) (void*), void* arg)
-{
-    int rc = -1;
-
-    if (self->nThreads < MAX_TRIGGERS)
-    {
-        if ((rc = pthread_create(&self->Threads[self->nThreads].thread, nullptr, monitorThread, arg)) != 0)
-        {
-            return rc;
-        }
-
-        self->Threads[self->nThreads].trigger = triggerType;
-        self->nThreads++;
-
-    }
-    else
-    {
-        //Trace("CreateThread: max number of triggers reached.");
-    }
-
-    return rc;
-}
-
 void EbpfTraceEngine::SetMaxRLimit()
 {
     struct rlimit lim = {

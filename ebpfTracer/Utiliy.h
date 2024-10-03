@@ -1,5 +1,5 @@
-#ifndef _COMMAND_H
-#define _COMMAND_H
+#ifndef _UTILIY_H
+#define _UTILIY_H
 
 #include <stdio.h>
 #include <unistd.h>
@@ -13,6 +13,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include <logging/easylogging++.h>
+
 #include "SingletonHandler.h"
 
 // buildcore build.sh create skel
@@ -22,6 +24,7 @@
 #define PACKET_LEN	8192
 #define NF_MAX_ADDRESS_LENGTH		28
 #define NF_MAX_IP_ADDRESS_LENGTH	16
+#define MAX_TRIGGERS 10
 
 typedef unsigned long long   ENDPOINT_ID;
 
@@ -39,14 +42,44 @@ typedef struct _NF_TCP_CONN_INFO
 	unsigned char	remoteAddress[NF_MAX_ADDRESS_LENGTH];
 } NF_TCP_CONN_INFO, * PNF_TCP_CONN_INFO;
 
-struct event {
-	int pid;
-	int ppid;
-	int uid;
-	int retval;
-	bool is_exit;
-	char cmd[EXEC_CMD_LEN];
-	unsigned long long ns;
+enum TriggerType
+{
+	Processor,
+	Commit,
+	Timer,
+	Signal,
+	ThreadCount,
+	FileDescriptorCount,
+	Exception,
+	GCThreshold,
+	GCGeneration,
+	Restrack
+};
+
+struct TriggerThread
+{
+	pthread_t thread;
+	enum TriggerType trigger;
+};
+
+struct TraceEnginConfiguration
+{
+	// Enable
+	bool bEnablebpf;
+
+	// Process and System info
+	pid_t ProcessId;
+	pid_t ProcessGroup;         // -pgid
+	bool bProcessGroup;         // -pgid
+
+	// multithreading
+	// set max number of concurrent dumps on init (default to 1)
+	int nThreads;
+	struct TriggerThread Threads[MAX_TRIGGERS];
+	pthread_mutex_t ptrace_mutex;
+	pthread_cond_t dotnetCond;
+	pthread_mutex_t dotnetMutex;
+	bool bSocketInitialized;
 };
 
 #endif

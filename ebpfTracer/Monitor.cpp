@@ -13,7 +13,49 @@ void* EbpfTraceEventThread(void* thread_args)
     if (!config || (config == nullptr))
         return nullptr;
 
-    int rc = 0;
-
     return nullptr;
+}
+
+int CreateThreadEx(struct TraceEnginConfiguration* self, enum TriggerType triggerType, void* (*Thread) (void*), void* arg)
+{
+    int rc = -1;
+
+    if (self->nThreads < MAX_TRIGGERS)
+    {
+        if ((rc = pthread_create(&self->Threads[self->nThreads].thread, NULL, Thread, arg)) != 0)
+        {
+            return rc;
+        }
+
+        self->Threads[self->nThreads].trigger = triggerType;
+        self->nThreads++;
+
+    }
+    else
+    {
+        //Trace("CreateThreadEx: max number of triggers reached.");
+    }
+
+    return rc;
+}
+
+int CreateMonitorThread(struct TraceEnginConfiguration* self)
+{
+    int rc = -1;
+    if (!self || (self == nullptr))
+        return rc;
+
+    
+    rc = CreateThreadEx(self, Processor, EbpfTraceEventThread, nullptr);
+    return rc;
+}
+
+int StartMonitor(struct TraceEnginConfiguration* monitorConfig)
+{
+    int rc = -1;
+    if (!monitorConfig || (monitorConfig == nullptr))
+        return rc;
+    
+    rc = CreateMonitorThread(monitorConfig);
+    return rc;
 }

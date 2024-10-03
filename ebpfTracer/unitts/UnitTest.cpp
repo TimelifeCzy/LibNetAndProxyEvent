@@ -15,7 +15,7 @@ int main(int argc, char** argv)
         return 0;
 
     // start event thread
-    SingleEbpfTraceEngine::instance()->CreateThread(&engincfg, Processor, EbpfTraceEventThread, nullptr);
+    StartMonitor(&engincfg);
 
     return 0;
 }
