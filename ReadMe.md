@@ -25,6 +25,11 @@ Ubuntu 24.0
 5. bpftool v7.4.0, using libbpf v1.4
 ```
 
+#### apt
+```
+apt-get install libelf-dev
+```
+
 #### Source Tree
 ```
 config: 
@@ -49,8 +54,7 @@ src:
 libebpftrace: Compile first, Build create file to libebpftrace.so or libebpftrace.a
 ```
 cd ebpfTracer/build
-cmake ..
-make
+./build.sh
 ```
 
 unitts: build to exec file, test libebpftrace.so or libebpftrace.a

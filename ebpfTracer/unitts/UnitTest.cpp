@@ -15,7 +15,6 @@ int main(int argc, char** argv)
         return 0;
 
     // start event thread
-    StartMonitor(&engincfg);
-
+    SingleEbpfMonitor::instance()->StartMonitor(&engincfg);
     return 0;
 }

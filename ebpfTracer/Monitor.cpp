@@ -1,12 +1,6 @@
 #include "Utiliy.h"
 #include "Monitor.h"
 
-int libbpf_print_fn(enum libbpf_print_level level, const char* format, va_list args)
-{
-    return vfprintf(stderr, format, args);
-    return 0;
-}
-
 void* EbpfTraceEventThread(void* thread_args)
 {
     struct TraceEnginConfiguration* config = (struct TraceEnginConfiguration*)thread_args;
@@ -16,13 +10,25 @@ void* EbpfTraceEventThread(void* thread_args)
     return nullptr;
 }
 
-int CreateThreadEx(struct TraceEnginConfiguration* self, enum TriggerType triggerType, void* (*Thread) (void*), void* arg)
+int libbpf_print_fn(enum libbpf_print_level level, const char* format, va_list args)
+{
+    return vfprintf(stderr, format, args);
+    return 0;
+}
+
+EbpfMonitor::EbpfMonitor() {
+}
+
+EbpfMonitor::~EbpfMonitor() {
+}
+
+int EbpfMonitor::CreateThreadEx(struct TraceEnginConfiguration* self, enum TriggerType triggerType, void* (*Thread) (void*), void* arg)
 {
     int rc = -1;
 
     if (self->nThreads < MAX_TRIGGERS)
     {
-        if ((rc = pthread_create(&self->Threads[self->nThreads].thread, NULL, Thread, arg)) != 0)
+        if ((rc = pthread_create(&self->Threads[self->nThreads].thread, nullptr, Thread, arg)) != 0)
         {
             return rc;
         }
@@ -39,7 +45,7 @@ int CreateThreadEx(struct TraceEnginConfiguration* self, enum TriggerType trigge
     return rc;
 }
 
-int CreateMonitorThread(struct TraceEnginConfiguration* self)
+int EbpfMonitor::CreateMonitorThread(struct TraceEnginConfiguration* self)
 {
     int rc = -1;
     if (!self || (self == nullptr))
@@ -50,7 +56,7 @@ int CreateMonitorThread(struct TraceEnginConfiguration* self)
     return rc;
 }
 
-int StartMonitor(struct TraceEnginConfiguration* monitorConfig)
+int EbpfMonitor::StartMonitor(struct TraceEnginConfiguration* monitorConfig)
 {
     int rc = -1;
     if (!monitorConfig || (monitorConfig == nullptr))

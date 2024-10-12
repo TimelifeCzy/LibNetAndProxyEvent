@@ -1,8 +1,20 @@
 #pragma once
 
+void* EbpfTraceEventThread(void* thread_args);
 int libbpf_print_fn(enum libbpf_print_level level, const char* format, va_list args);
 
-void* EbpfTraceEventThread(void* thread_args);
+class EbpfMonitor
+{
+public:
+    EbpfMonitor(/* args */);
+    ~EbpfMonitor();
 
-int CreateMonitorThread(struct TraceEnginConfiguration* self);
-int StartMonitor(struct TraceEnginConfiguration* monitorConfig);
+public:
+    int CreateMonitorThread(struct TraceEnginConfiguration* self);
+    int StartMonitor(struct TraceEnginConfiguration* monitorConfig);
+
+private:
+    int CreateThreadEx(struct TraceEnginConfiguration* self, enum TriggerType triggerType, void* (*Thread) (void*), void* arg);
+};
+
+using SingleEbpfMonitor = ustdex::Singleton<EbpfMonitor>;

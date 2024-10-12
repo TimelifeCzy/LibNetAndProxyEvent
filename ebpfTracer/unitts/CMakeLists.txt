@@ -11,7 +11,6 @@ SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 include_directories("../")
 include_directories("../../include/")
 
-LINK_DIRECTORIES("../build/") # libebpftrace.a
 LINK_DIRECTORIES("../../lib/")
 LINK_DIRECTORIES("../../lib/bpf/")
 #LINK_DIRECTORIES("../lib/bpf/lib64/")
@@ -24,7 +23,7 @@ LINK_DIRECTORIES("../../lib/bpf/")
 # exec build bpf
 add_executable (ebpftrace "UnitTest.cpp" "../Utiliy.h" )
 
-target_link_libraries(ebpftrace libbpf.a libebpftrace.a elf z)
+target_link_libraries(ebpftrace libbpf.a libebpftrace.a elf z )
 target_link_libraries(ebpftrace pthread dl)
 
 add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
