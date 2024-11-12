@@ -1,3 +1,3 @@
-cmake ../CMakeLists.txt
+cmake ..
 make
 cp ./libebpftrace.a ../../lib/
