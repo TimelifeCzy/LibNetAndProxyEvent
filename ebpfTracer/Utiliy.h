@@ -17,9 +17,6 @@
 
 #include "SingletonHandler.h"
 
-// buildcore build.sh create skel
-#include "traceEngin.skel.h"
-
 #define EXEC_CMD_LEN 128
 #define PACKET_LEN	8192
 #define NF_MAX_ADDRESS_LENGTH		28

@@ -1,6 +1,5 @@
 #pragma once
 
-void* EbpfTraceEventThread(void* thread_args);
 int libbpf_print_fn(enum libbpf_print_level level, const char* format, va_list args);
 
 class EbpfMonitor

@@ -1,5 +1,9 @@
 #include "Utiliy.h"
+
+#include <bpf/libbpf.h>
+
 #include "Monitor.h"
+#include "traceEngin.skel.h"
 #include "EbpfTraceEngine.h"
 
 EbpfTraceEngine::EbpfTraceEngine(/* args */)
@@ -22,7 +26,10 @@ void EbpfTraceEngine::SetMaxRLimit()
 
 void EbpfTraceEngine::StopRestrack(struct traceEngin* skel)
 {
-    traceEngin__destroy(skel);
+    if (skel) {
+        traceEngin__destroy(skel);
+        skel = nullptr;
+    }
 }
 
 struct traceEngin* const EbpfTraceEngine::RunRestrack(struct TraceEnginConfiguration* config)

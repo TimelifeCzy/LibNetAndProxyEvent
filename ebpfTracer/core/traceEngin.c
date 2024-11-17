@@ -1,80 +1,112 @@
+#include "vmlinux.h"
+
+#include <bpf/bpf_endian.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_core_read.h>
+
 #include "traceEngin.h"
+#include "traceEngin_maps.h"
 
 char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
-SEC("tracepoint/syscalls/sys_enter_execve")
-const int sys_enter_execve(struct trace_event_raw_sys_enter* ctx)
+static bool __attribute__((always_inline))
+skb_revalidate_data(struct __sk_buff *skb, uint8_t **head, uint8_t **tail, const u32 offset)
 {
-    u64 id = 0;
-    pid_t pid = 0;
-    struct event* e = NULL;
-    struct task_struct* task = NULL;
+    if (*head + offset > *tail) {
+        if (bpf_skb_pull_data(skb, offset) < 0) {
+            return false;
+        }
+        *head = (uint8_t *) (long) skb->data;
+        *tail = (uint8_t *) (long) skb->data_end;
+        if (*head + offset > *tail) {
+            return false;
+        }
+    }
+    return true;
+}
 
-    uid_t uid = (u32)bpf_get_current_uid_gid();
-
-    id = bpf_get_current_pid_tgid();
-    pid = id >> 32;
-
-    task = (struct task_struct*)bpf_get_current_task();
-
-    // read name 
-    char* cmd = (char*)BPF_CORE_READ(ctx, args[0]);
-    e = bpf_ringbuf_reserve(&ringBuffer, sizeof(*e), 0);
-    if (!e)
-        return 0;
+static int __attribute__((always_inline))
+parse_packet(struct __sk_buff* skb, bool ingress)
+{
+    uint8_t* start = (uint8_t*)(long)skb->data;
+    uint8_t* end = (uint8_t*)(long)skb->data_end;
     
-    e->pid = pid;
-    e->uid = uid;
-    e->ppid = BPF_CORE_READ(task, real_parent, pid);
-    bpf_probe_read_str(&e->cmd, EXEC_CMD_LEN, cmd);
-    e->ns = bpf_ktime_get_ns();
+    // packet pre check
+    if (start + sizeof(struct ethhdr) > end)
+        return TC_ACT_UNSPEC;
 
-    bpf_ringbuf_submit(e, 0);
-    bpf_printk("TRACEPOINT EXEC pid = %d, uid = %d, cmd = %s\n", pid, uid, e->cmd);
+    struct ethhdr* eth = (struct ethhdr*)start;
+    if(!eth || (NULL == eth))
+        return TC_ACT_UNSPEC;
+
+    uint32_t hdr_off_len = 0;
+    struct NetworkEvent pkt_ctx = { 0, };
+    const int type = bpf_ntohs(eth->h_proto);
+    if(type == ETH_P_IP) {
+        hdr_off_len = sizeof(struct ethhdr) + sizeof(struct iphdr);
+        if (!skb_revalidate_data(skb, &start, &end, hdr_off_len))
+            return TC_ACT_UNSPEC;
+        // create a IPv4-Mapped IPv6 Address
+        struct iphdr* ip = (void*)start + sizeof(struct ethhdr);
+        if(ip) {
+            pkt_ctx.src_addr.in6_u.u6_addr32[3] = ip->saddr;
+            pkt_ctx.dst_addr.in6_u.u6_addr32[3] = ip->daddr;
+            pkt_ctx.src_addr.in6_u.u6_addr16[5] = 0xffff;
+            pkt_ctx.dst_addr.in6_u.u6_addr16[5] = 0xffff;
+            pkt_ctx.protocol = ip->protocol;
+        }
+    }
+    else if( type == ETH_P_IPV6) {
+        hdr_off_len = sizeof(struct ethhdr) + sizeof(struct ipv6hdr);
+        if (!skb_revalidate_data(skb, &start, &end, hdr_off_len))
+            return TC_ACT_UNSPEC;
+
+        struct ipv6hdr* ip6 = (void*)start + sizeof(struct ethhdr);
+        if(ip6) {
+            pkt_ctx.src_addr = ip6->saddr;
+            pkt_ctx.dst_addr = ip6->daddr;
+            pkt_ctx.protocol = ip6->nexthdr;
+        }
+    }
+    else
+        return TC_ACT_UNSPEC;
+
+    if (IPPROTO_TCP != pkt_ctx.protocol)
+        return TC_ACT_UNSPEC;
+
+    pkt_ctx.pid = 0;
+    pkt_ctx.ingress = ingress;
+    pkt_ctx.packet_size = skb->len;
+    pkt_ctx.ifindex = skb->ifindex;
+    pkt_ctx.timestamp = bpf_ktime_get_ns();
+
+    if (IPPROTO_TCP == pkt_ctx.protocol) {
+        if (!skb_revalidate_data(skb, &start, &end, hdr_off_len + sizeof(struct tcphdr)))
+            return TC_ACT_UNSPEC;
+        struct tcphdr* tcp = (void*)start + hdr_off_len;
+        pkt_ctx.src_port = tcp->source;
+        pkt_ctx.dst_port = tcp->dest;
+    }
+    else
+        return TC_ACT_UNSPEC;
+    
+    const size_t pkt_size = sizeof(pkt_ctx);
+    bpf_perf_event_output(skb, &net_events, BPF_F_CURRENT_CPU, &pkt_ctx, pkt_size);
+    return TC_ACT_UNSPEC;
+};
+
+SEC("classifier/ingress")
+int classifier_ingress(struct __sk_buff* skb)
+{
+    if(skb)
+        return parse_packet(skb, true);
     return 0;
 }
 
-SEC("tp/sched/sched_process_exit")
-int snoop_process_exit(struct trace_event_raw_sched_process_template* ctx)
+SEC("classifier/egress")
+int classifier_egress(struct __sk_buff* skb)
 {
-    pid_t pid = 0, tid = 0;
-    u64 id, ts, * start_ts = NULL, start_time = 0;
-    struct event* e = NULL;
-    struct task_struct* task = NULL;
-
-    uid_t uid = (u32)bpf_get_current_uid_gid();
-    id = bpf_get_current_pid_tgid();
-    pid = id >> 32;
-    tid = (u32)id;
-
-    task = (struct task_struct*)bpf_get_current_task();
-    start_time = BPF_CORE_READ(task, start_time);
-
-    /* ignore thread exits */
-    if (pid != tid)
-        return 0;
-    
-    e = bpf_ringbuf_reserve(&ringBuffer, sizeof(*e), 0);
-    if (!e)
-        return 0;
-    
-    e->ns = bpf_ktime_get_ns() - start_time;
-    e->pid = pid;
-    e->uid = uid;
-    e->ppid = BPF_CORE_READ(task, real_parent, tgid);
-    e->is_exit = true;
-    e->retval = (BPF_CORE_READ(task, exit_code) >> 8) & 0xff;
-    bpf_get_current_comm(&e->cmd, sizeof(e->cmd));
-
-    bpf_ringbuf_submit(e, 0);
-    bpf_printk("TRACEPOINT EXIT pid = %d, uid = %d, cmd = %s\n", pid, uid, e->cmd);
-    return 0;
-}
-
-SEC("tp/syscalls/sys_enter_write")
-const int handle_tp(void *ctx)
-{
-    const int pid = bpf_get_current_pid_tgid() >> 32;
-    bpf_printk("BPF triggered from PID %d.\n", pid);
+    if(skb)
+        return parse_packet(skb, false);
     return 0;
 }
