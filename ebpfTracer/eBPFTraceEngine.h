@@ -1,12 +1,12 @@
 #pragma once
 
-class EbpfTraceEngine
+class eBPFTraceEngine
 {
 private:
     /* data */
 public:
-    EbpfTraceEngine(/* args */);
-    ~EbpfTraceEngine();
+    eBPFTraceEngine(/* args */);
+    ~eBPFTraceEngine();
 
 public:
     void SetMaxRLimit();
@@ -14,4 +14,4 @@ public:
     struct traceEngin* const RunRestrack(struct TraceEnginConfiguration* config);
 };
 
-using SingleEbpfTraceEngine = ustdex::Singleton<EbpfTraceEngine>;
+using SingleeBPFTraceEngine = ustdex::Singleton<eBPFTraceEngine>;

@@ -1,20 +1,20 @@
-#include "Utiliy.h"
-#include "Monitor.h"
-#include "EbpfTraceEngine.h"
+#include "../Utiliy.h"
+#include "../eBPFMonitor.h"
+#include "../eBPFTraceEngine.h"
 
 // Unit test bpf trace montior
 int main(int argc, char** argv)
 {
     TraceEnginConfiguration engincfg;
-    engincfg.bEnablebpf = true;
+    engincfg.bEnableBPF = true;
     engincfg.ProcessId = getpid();
-
+    
     // start bpf
-    traceEngin* pTrace = SingleEbpfTraceEngine::instance()->RunRestrack(&engincfg);
-    if (pTrace == nullptr)
+    traceEngin* pTrace = SingleeBPFTraceEngine::instance()->RunRestrack(&engincfg);
+    if (!pTrace || (pTrace == nullptr))
         return 0;
 
     // start event thread
-    SingleEbpfMonitor::instance()->StartMonitor(&engincfg);
+    SingleeBPFMonitor::instance()->StartMonitor(&engincfg);
     return 0;
 }

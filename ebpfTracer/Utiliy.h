@@ -23,7 +23,7 @@
 #define NF_MAX_IP_ADDRESS_LENGTH	16
 #define MAX_TRIGGERS 10
 
-typedef unsigned long long   ENDPOINT_ID;
+typedef unsigned long long ENDPOINT_ID;
 
 typedef struct _NF_TCP_CONN_INFO
 {
@@ -62,7 +62,7 @@ struct TriggerThread
 struct TraceEnginConfiguration
 {
 	// Enable
-	bool bEnablebpf;
+	bool bEnableBPF;
 
 	// Process and System info
 	pid_t ProcessId;

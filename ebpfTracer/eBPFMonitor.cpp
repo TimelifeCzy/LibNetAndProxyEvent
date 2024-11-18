@@ -1,9 +1,7 @@
 #include "Utiliy.h"
 
-#include <bpf/libbpf.h>
-
 #include "traceEngin.skel.h"
-#include "Monitor.h"
+#include "eBPFMonitor.h"
 
 void* EbpfTraceEventThread(void* thread_args)
 {
@@ -14,19 +12,13 @@ void* EbpfTraceEventThread(void* thread_args)
     return nullptr;
 }
 
-int libbpf_print_fn(enum libbpf_print_level level, const char* format, va_list args)
-{
-    return vfprintf(stderr, format, args);
-    return 0;
+eBPFMonitor::eBPFMonitor() {
 }
 
-EbpfMonitor::EbpfMonitor() {
+eBPFMonitor::~eBPFMonitor() {
 }
 
-EbpfMonitor::~EbpfMonitor() {
-}
-
-int EbpfMonitor::CreateThreadEx(struct TraceEnginConfiguration* self, enum TriggerType triggerType, void* (*Thread) (void*), void* arg)
+int eBPFMonitor::CreateThreadEx(struct TraceEnginConfiguration* self, enum TriggerType triggerType, void* (*Thread) (void*), void* arg)
 {
     int rc = -1;
 
@@ -43,13 +35,12 @@ int EbpfMonitor::CreateThreadEx(struct TraceEnginConfiguration* self, enum Trigg
     }
     else
     {
-        //Trace("CreateThreadEx: max number of triggers reached.");
     }
 
     return rc;
 }
 
-int EbpfMonitor::CreateMonitorThread(struct TraceEnginConfiguration* self)
+int eBPFMonitor::CreateMonitorThread(struct TraceEnginConfiguration* self)
 {
     int rc = -1;
     if (!self || (self == nullptr))
@@ -60,7 +51,7 @@ int EbpfMonitor::CreateMonitorThread(struct TraceEnginConfiguration* self)
     return rc;
 }
 
-int EbpfMonitor::StartMonitor(struct TraceEnginConfiguration* monitorConfig)
+int eBPFMonitor::StartMonitor(struct TraceEnginConfiguration* monitorConfig)
 {
     int rc = -1;
     if (!monitorConfig || (monitorConfig == nullptr))

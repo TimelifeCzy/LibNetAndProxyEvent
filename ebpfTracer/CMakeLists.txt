@@ -2,33 +2,50 @@ cmake_minimum_required (VERSION 3.22.0)
 
 project(ebpftrace VERSION 1.0)
 
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# alter exec buildcore
+set(DIRECTORY_PATH "/project/LibNetAndProxyEvent/ebpfTracer/buildcore/")
+execute_process (COMMAND bash ${DIRECTORY_PATH}clean.sh WORKING_DIRECTORY ${DIRECTORY_PATH})
+execute_process (COMMAND bash ${DIRECTORY_PATH}build.sh WORKING_DIRECTORY ${DIRECTORY_PATH})
+
 set(CMAKE_CXX_STANDARD 11)
-SET(CMAKE_BUILD_TYPE "Debug")
-# SET(CMAKE_BUILD_TYPE "Release")
-SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
-SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_BUILD_TYPE "Debug")
+# set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
+set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 
 include_directories("../include/")
 
 LINK_DIRECTORIES("../lib/")
 LINK_DIRECTORIES("../lib/bpf/")
 
-# exec buildcore
-SET(DIRECTORY_PATH "/project/LibNetAndProxyEvent/ebpfTracer/buildcore/")
-execute_process (COMMAND bash ${DIRECTORY_PATH}clean.sh WORKING_DIRECTORY ${DIRECTORY_PATH})
-execute_process (COMMAND bash ${DIRECTORY_PATH}build.sh WORKING_DIRECTORY ${DIRECTORY_PATH})
+# unit test UnitTest.cpp.
+add_executable(ebpftrace 
+                            "Utiliy.h"
+                            "../include/traceEngin.skel.h"
+                            "eBPFHlpr.h" "eBPFHlpr.cpp"
+                            "eBPFTraceEngine.h" "eBPFTraceEngine.cpp"
+                            "eBPFMonitor.h" "eBPFMonitor.cpp" 
+                            "./unitts/UnitTest.cpp" 
+)
 
 # build ebpftrace.a
-add_library(ebpftrace   "Utiliy.h"
-                        "EbpfTraceEngine.h" "EbpfTraceEngine.cpp"
-                        "Monitor.h" "Monitor.cpp" 
-)
-# build ebpftrace.so
-# add_library(ebpftrace   SHARED 
+# add_library(ebpftrace   STATIC 
 #                         "Utiliy.h"
-#                         "EbpfTraceEngine.h" "EbpfTraceEngine.cpp"
-#                         "Monitor.h" "Monitor.cpp" 
+#                         "../include/traceEngin.skel.h"
+#                         "eBPFHlpr.h" "eBPFHlpr.cpp"
+#                         "eBPFTraceEngine.h" "eBPFTraceEngine.cpp"
+#                         "eBPFMonitor.h" "eBPFMonitor.cpp" 
+#                         "./unitts/UnitTest.cpp" 
+# )
+
+# build ebpftrace.so
+# add_library(ebpftrace  SHARED
+#                        "Utiliy.h"
+#                        "../include/traceEngin.skel.h"
+#                        "eBPFHlpr.h" "eBPFHlpr.cpp"
+#                        "eBPFTraceEngine.h" "eBPFTraceEngine.cpp"
+#                        "eBPFMonitor.h" "eBPFMonitor.cpp" 
 # )
 
 # set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)

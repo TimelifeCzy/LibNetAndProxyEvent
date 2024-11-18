@@ -84,8 +84,10 @@ parse_packet(struct __sk_buff* skb, bool ingress)
         if (!skb_revalidate_data(skb, &start, &end, hdr_off_len + sizeof(struct tcphdr)))
             return TC_ACT_UNSPEC;
         struct tcphdr* tcp = (void*)start + hdr_off_len;
-        pkt_ctx.src_port = tcp->source;
-        pkt_ctx.dst_port = tcp->dest;
+        if (tcp) {
+            pkt_ctx.src_port = tcp->source;
+            pkt_ctx.dst_port = tcp->dest;
+        }
     }
     else
         return TC_ACT_UNSPEC;

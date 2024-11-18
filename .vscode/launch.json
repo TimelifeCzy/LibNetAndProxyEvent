@@ -5,7 +5,7 @@
             "name": "ebpfTrace",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/LibNetAndProxyEvent/ebpfTracer/unitts/ebpftrace",
+            "program": "${workspaceFolder}/ebpfTracer/build/ebpftrace",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

@@ -1,12 +1,10 @@
 #pragma once
 
-int libbpf_print_fn(enum libbpf_print_level level, const char* format, va_list args);
-
-class EbpfMonitor
+class eBPFMonitor
 {
 public:
-    EbpfMonitor(/* args */);
-    ~EbpfMonitor();
+    eBPFMonitor(/* args */);
+    ~eBPFMonitor();
 
 public:
     int CreateMonitorThread(struct TraceEnginConfiguration* self);
@@ -16,4 +14,4 @@ private:
     int CreateThreadEx(struct TraceEnginConfiguration* self, enum TriggerType triggerType, void* (*Thread) (void*), void* arg);
 };
 
-using SingleEbpfMonitor = ustdex::Singleton<EbpfMonitor>;
+using SingleeBPFMonitor = ustdex::Singleton<eBPFMonitor>;

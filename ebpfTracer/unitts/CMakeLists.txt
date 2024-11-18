@@ -13,17 +13,11 @@ include_directories("../../include/")
 
 LINK_DIRECTORIES("../../lib/")
 LINK_DIRECTORIES("../../lib/bpf/")
-#LINK_DIRECTORIES("../lib/bpf/lib64/")
-
-# exec buildcore
-# SET(DIRECTORY_PATH "/project/LibNetAndProxyEvent/ebpfTracer/buildcore/")
-# execute_process (COMMAND bash ${DIRECTORY_PATH}clean.sh WORKING_DIRECTORY ${DIRECTORY_PATH})
-# execute_process (COMMAND bash ${DIRECTORY_PATH}build.sh WORKING_DIRECTORY ${DIRECTORY_PATH})
 
 # exec build bpf
-add_executable (ebpftrace "UnitTest.cpp" "../Utiliy.h" )
+add_executable (ebpftrace   "../Utiliy.h" "UnitTest.cpp" )
 
 target_link_libraries(ebpftrace libbpf.a libebpftrace.a elf z )
 target_link_libraries(ebpftrace pthread dl)
 
-add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+# add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
