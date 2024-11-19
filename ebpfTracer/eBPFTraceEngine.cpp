@@ -35,26 +35,22 @@ struct traceEngin* const eBPFTraceEngine::RunRestrack(struct TraceEnginConfigura
 {
     if (!config)
         return nullptr;
+    
     if (config->bEnableBPF == false)
         return nullptr;
     
     int ret = -1;
     struct traceEngin* skel = nullptr;
 
-    SetMaxRLimit();
     libbpf_set_print(libbpf_print_fn);
+
+    SetMaxRLimit();
 
     // Open the eBPF program
     skel = traceEngin__open();
     if (!skel || (nullptr == skel))
         return nullptr;
-
-    // Set eBPF program globals
-    // std::string path = "/proc/" + std::to_string(config->ProcessId) + "/ns/pid";
-    // struct stat sb = { 0, };
-    // if (stat(path.c_str(), &sb) == -1)
-    //     return nullptr;
-    
+        
     ret = traceEngin__load(skel);
     if (ret)
         return nullptr;

@@ -14,7 +14,7 @@ int main(int argc, char** argv)
     if (!pTrace || (pTrace == nullptr))
         return 0;
 
-    // start event thread
+    // start read perf buffer  thread
     SingleeBPFMonitor::instance()->StartMonitor(&engincfg);
     return 0;
 }
