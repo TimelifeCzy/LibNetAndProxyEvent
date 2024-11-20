@@ -26,50 +26,67 @@ static bool skb_revalidate_data(struct __sk_buff *skb, uint8_t **head, uint8_t *
 __attribute__((always_inline))
 static int parse_packet(struct __sk_buff* skb, bool ingress)
 {
-    uint8_t* start = (uint8_t*)(long)skb->data;
-    uint8_t* end = (uint8_t*)(long)skb->data_end;
-    
     // packet pre check
-    if (start + sizeof(struct ethhdr) > end)
+    uint8_t* packet_start = (uint8_t*)(long)skb->data;
+    uint8_t* packet_end = (uint8_t*)(long)skb->data_end;
+    if (packet_start + sizeof(struct ethhdr) > packet_end)
         return TC_ACT_UNSPEC;
 
-    struct ethhdr* eth = (struct ethhdr*)start;
+    struct ethhdr* eth = (struct ethhdr*)packet_start;
     if(!eth || (NULL == eth))
         return TC_ACT_UNSPEC;
-
+    
+    // get ip hdr packet
     uint32_t hdr_off_len = 0;
     struct NetworkEvent pkt_ctx = { 0, };
     const int type = bpf_ntohs(eth->h_proto);
     if(type == ETH_P_IP) {
         hdr_off_len = sizeof(struct ethhdr) + sizeof(struct iphdr);
-        if (!skb_revalidate_data(skb, &start, &end, hdr_off_len))
+        if (!skb_revalidate_data(skb, &packet_start, &packet_end, hdr_off_len))
             return TC_ACT_UNSPEC;
-        // create a IPv4-Mapped IPv6 Address
-        struct iphdr* ip = (void*)start + sizeof(struct ethhdr);
-        if(ip) {
-            pkt_ctx.src_addr.in6_u.u6_addr32[3] = ip->saddr;
-            pkt_ctx.dst_addr.in6_u.u6_addr32[3] = ip->daddr;
-            pkt_ctx.src_addr.in6_u.u6_addr16[5] = 0xffff;
-            pkt_ctx.dst_addr.in6_u.u6_addr16[5] = 0xffff;
-            pkt_ctx.protocol = ip->protocol;
-        }
+        struct iphdr* ip = (void*)packet_start + sizeof(struct ethhdr);
+        if (!ip || (NULL == ip))
+            return TC_ACT_UNSPEC;
+        pkt_ctx.src_addr.in6_u.u6_addr32[3] = ip->saddr;
+        pkt_ctx.dst_addr.in6_u.u6_addr32[3] = ip->daddr;
+        pkt_ctx.src_addr.in6_u.u6_addr16[5] = 0xffff;
+        pkt_ctx.dst_addr.in6_u.u6_addr16[5] = 0xffff;
+        pkt_ctx.protocol = ip->protocol;      
     }
     else if( type == ETH_P_IPV6) {
         hdr_off_len = sizeof(struct ethhdr) + sizeof(struct ipv6hdr);
-        if (!skb_revalidate_data(skb, &start, &end, hdr_off_len))
+        if (!skb_revalidate_data(skb, &packet_start, &packet_end, hdr_off_len))
             return TC_ACT_UNSPEC;
-
-        struct ipv6hdr* ip6 = (void*)start + sizeof(struct ethhdr);
-        if(ip6) {
-            pkt_ctx.src_addr = ip6->saddr;
-            pkt_ctx.dst_addr = ip6->daddr;
-            pkt_ctx.protocol = ip6->nexthdr;
-        }
+        struct ipv6hdr* ip6 = (void*)packet_start + sizeof(struct ethhdr);
+        if (!ip6 || (NULL == ip6))
+            return TC_ACT_UNSPEC;
+        pkt_ctx.src_addr = ip6->saddr;
+        pkt_ctx.dst_addr = ip6->daddr;
+        pkt_ctx.protocol = ip6->nexthdr;
     }
     else
         return TC_ACT_UNSPEC;
 
-    if (IPPROTO_TCP != pkt_ctx.protocol)
+    // get network hdr packet
+    if (IPPROTO_TCP == pkt_ctx.protocol) {
+        if (!skb_revalidate_data(skb, &packet_start, &packet_end, hdr_off_len + sizeof(struct tcphdr)))
+            return TC_ACT_UNSPEC;
+        struct tcphdr* tcp = (void*)packet_start + hdr_off_len;
+        if (!tcp || (NULL == tcp))
+            return TC_ACT_UNSPEC;
+        pkt_ctx.src_port = tcp->source;
+        pkt_ctx.dst_port = tcp->dest;
+    }
+    else if (IPPROTO_UDP == pkt_ctx.protocol) {
+        if (!skb_revalidate_data(skb, &packet_start, &packet_end, hdr_off_len + sizeof(struct udphdr)))
+            return TC_ACT_UNSPEC;
+        struct udphdr* udp = (void*)packet_start + hdr_off_len;
+        if (!udp || (NULL == udp))
+            return TC_ACT_UNSPEC;
+        pkt_ctx.src_port = udp->source;
+        pkt_ctx.dst_port = udp->dest;
+    }
+    else
         return TC_ACT_UNSPEC;
 
     pkt_ctx.pid = 0;
@@ -77,30 +94,25 @@ static int parse_packet(struct __sk_buff* skb, bool ingress)
     pkt_ctx.packet_size = skb->len;
     pkt_ctx.ifindex = skb->ifindex;
     pkt_ctx.timestamp = bpf_ktime_get_ns();
-
-    if (!skb_revalidate_data(skb, &start, &end, hdr_off_len + sizeof(struct tcphdr)))
-        return TC_ACT_UNSPEC;
-    
-    struct tcphdr* tcp = (void*)start + hdr_off_len;
-    if (tcp) {
-        pkt_ctx.src_port = tcp->source;
-        pkt_ctx.dst_port = tcp->dest;
-    }
     
     const size_t pkt_size = sizeof(pkt_ctx);
     bpf_perf_event_output(skb, &net_events, BPF_F_CURRENT_CPU, &pkt_ctx, pkt_size);
     return TC_ACT_UNSPEC;
 };
 
-SEC("classifier/ingress")
+/// @tchook {"ifindex":1, "attach_point":"BPF_TC_INGRESS"}
+/// @tcopts {"handle":1, "priority":1}
+SEC("tc")
 int classifier_ingress(struct __sk_buff* skb)
 {
-    if(skb)
+    if (skb)
         return parse_packet(skb, true);
     return 0;
 }
 
-SEC("classifier/egress")
+/// @tchook {"ifindex":1, "attach_point":"BPF_TC_EGRESS"}
+/// @tcopts {"handle":1, "priority":1}
+SEC("tc")
 int classifier_egress(struct __sk_buff* skb)
 {
     if(skb)

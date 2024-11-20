@@ -8,7 +8,7 @@ void* EbpfTraceEventThread(void* thread_args)
     struct TraceEnginConfiguration* config = (struct TraceEnginConfiguration*)thread_args;
     if (!config || (config == nullptr))
         return nullptr;
-        
+    
     return nullptr;
 }
 
