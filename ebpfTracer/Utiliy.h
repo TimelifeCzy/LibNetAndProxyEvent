@@ -39,18 +39,21 @@ typedef struct _NF_TCP_CONN_INFO
 	unsigned char	remoteAddress[NF_MAX_ADDRESS_LENGTH];
 } NF_TCP_CONN_INFO, * PNF_TCP_CONN_INFO;
 
-enum TriggerType
+enum eBPFPerfEvent
 {
+	eBPFStart = 0,
+	eBPFProcess,
+	eBPFThread,
+	eBPFNetwork,
+	eBPFFile,
+
+
+
+	eBPFEnd = 100
+};
+
+enum TriggerType {
 	Processor,
-	Commit,
-	Timer,
-	Signal,
-	ThreadCount,
-	FileDescriptorCount,
-	Exception,
-	GCThreshold,
-	GCGeneration,
-	Restrack
 };
 
 struct TriggerThread

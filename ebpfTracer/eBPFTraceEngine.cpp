@@ -23,44 +23,44 @@ void eBPFTraceEngine::SetMaxRLimit()
     setrlimit(RLIMIT_MEMLOCK, &lim);
 }
 
-void eBPFTraceEngine::StopRestrack(struct traceEngin* skel)
+void eBPFTraceEngine::StopRestrack()
 {
-    if (skel) {
-        traceEngin__destroy(skel);
-        skel = nullptr;
+    if (m_skel) {
+        traceEngin__destroy(m_skel);
+        m_skel = nullptr;
     }
 }
 
-struct traceEngin* const eBPFTraceEngine::RunRestrack(struct TraceEnginConfiguration* config)
+const bool eBPFTraceEngine::RunRestrack(struct TraceEnginConfiguration* config)
 {
     if (!config)
-        return nullptr;
+        return false;
     
     if (config->bEnableBPF == false)
-        return nullptr;
+        return false;
     
-    int ret = -1;
-    struct traceEngin* skel = nullptr;
-
     libbpf_set_print(libbpf_print_fn);
 
     SetMaxRLimit();
 
     // Open the eBPF program
-    skel = traceEngin__open();
-    if (!skel || (nullptr == skel))
-        return nullptr;
-    
-    ret = traceEngin__load(skel);
-    if (ret)
-        return nullptr;
+    m_skel = traceEngin__open();
+    if (!m_skel || (nullptr == m_skel))
+        return false;
 
-    ret = traceEngin__attach(skel);
+    int ret = -1;
+    ret = traceEngin__load(m_skel);
+    if (ret) {
+        traceEngin__destroy(m_skel);
+        return false;
+    }
+    
+    ret = traceEngin__attach(m_skel);
     if (ret)
     {
-        traceEngin__destroy(skel);
-        return nullptr;
+        traceEngin__destroy(m_skel);
+        return false;
     }
 
-    return skel;
+    return true;
 }

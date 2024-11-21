@@ -10,8 +10,11 @@ public:
 
 public:
     void SetMaxRLimit();
-    void StopRestrack(struct traceEngin* skel);
-    struct traceEngin* const RunRestrack(struct TraceEnginConfiguration* config);
+    void StopRestrack();
+    const bool RunRestrack(struct TraceEnginConfiguration* config);
+
+private:
+    struct traceEngin* m_skel = nullptr;
 };
 
 using SingleeBPFTraceEngine = ustdex::Singleton<eBPFTraceEngine>;

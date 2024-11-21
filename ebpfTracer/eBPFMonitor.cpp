@@ -2,13 +2,23 @@
 
 #include "traceEngin.skel.h"
 #include "eBPFMonitor.h"
+#include "TaskHandler.h"
 
-void* EbpfTraceEventThread(void* thread_args)
+#include <thread>
+
+void* eBPFMonitor::EbpfTraceEventThread(void* thread_args)
 {
-    struct TraceEnginConfiguration* config = (struct TraceEnginConfiguration*)thread_args;
-    if (!config || (config == nullptr))
-        return nullptr;
-    
+    // struct TraceEnginConfiguration* config = (struct TraceEnginConfiguration*)thread_args;
+    // if (!config || (config == nullptr))
+    //     return nullptr;
+    while (1) {
+        if (SingleeBPFMonitor::instance()->GetStopStu())
+            break;
+
+        
+        // sleep thread for 10ms
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
     return nullptr;
 }
 
@@ -47,7 +57,7 @@ int eBPFMonitor::CreateMonitorThread(struct TraceEnginConfiguration* self)
         return rc;
 
     
-    rc = CreateThreadEx(self, Processor, EbpfTraceEventThread, nullptr);
+    rc = CreateThreadEx(self, Processor, eBPFMonitor::EbpfTraceEventThread, nullptr);
     return rc;
 }
 
@@ -59,4 +69,20 @@ int eBPFMonitor::StartMonitor(struct TraceEnginConfiguration* monitorConfig)
     
     rc = CreateMonitorThread(monitorConfig);
     return rc;
+}
+
+void eBPFMonitor::StopMonitor(struct TraceEnginConfiguration* monitorConfig) {
+    if (!monitorConfig || (nullptr == monitorConfig))
+        return;
+    
+    m_tStop = true;
+    for (int i = 0; i < monitorConfig->nThreads; ++i) {
+        const int tids = monitorConfig->Threads[i].thread;
+        const int pState = pthread_kill(monitorConfig->Threads[i].thread, 0);
+        if (pState == 0 && tids) {
+            pthread_detach(tids);
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+            pthread_cancel(tids);
+        }
+    }
 }

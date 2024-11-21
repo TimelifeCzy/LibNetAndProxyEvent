@@ -26,6 +26,7 @@ add_executable(ebpftrace
                             "eBPFHlpr.h" "eBPFHlpr.cpp"
                             "eBPFTraceEngine.h" "eBPFTraceEngine.cpp"
                             "eBPFMonitor.h" "eBPFMonitor.cpp" 
+                            "TaskHandler.h" "TaskHandler.cpp" 
                             "./unitts/UnitTest.cpp" 
 )
 
