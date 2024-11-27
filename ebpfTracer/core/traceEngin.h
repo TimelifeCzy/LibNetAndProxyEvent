@@ -2,6 +2,42 @@
 #define TRACEENGIN_H
 
 #define MAX_PERCPU_BUFSIZE      (1 << 15)
+#define TASK_COMM_LEN           16
+
+// https://blog.aquasec.com/ebf-portable-code
+#ifndef CORE
+#define GET_FIELD_ADDR(field) &field
+#define READ_KERN(ptr)                                                         \
+    ({                                                                         \
+        typeof(ptr) _val;                                                      \
+        __builtin_memset((void *)&_val, 0, sizeof(_val));                      \
+        bpf_probe_read((void *)&_val, sizeof(_val), &ptr);                     \
+        _val;                                                                  \
+    })
+#define READ_USER(ptr)                                                         \
+    ({                                                                         \
+        typeof(ptr) _val;                                                      \
+        __builtin_memset((void *)&_val, 0, sizeof(_val));                      \
+        bpf_probe_read_user((void *)&_val, sizeof(_val), &ptr);                \
+        _val;                                                                  \
+    })
+#else // CORE
+#define GET_FIELD_ADDR(field) __builtin_preserve_access_index(&field)
+#define READ_KERN(ptr)                                                         \
+    ({                                                                         \
+        typeof(ptr) _val;                                                      \
+        __builtin_memset((void *)&_val, 0, sizeof(_val));                      \
+        bpf_core_read((void *)&_val, sizeof(_val), &ptr);                      \
+        _val;                                                                  \
+    })
+#define READ_USER(ptr)                                                         \
+    ({                                                                         \
+        typeof(ptr) _val;                                                      \
+        __builtin_memset((void *)&_val, 0, sizeof(_val));                      \
+        bpf_core_read_user((void *)&_val, sizeof(_val), &ptr);                 \
+        _val;                                                                  \
+    })
+#endif
 
 /* map macro defination */
 #define BPF_MAP(_name, _type, _key_type, _value_type, _max_entries)            \
@@ -45,17 +81,31 @@ BPF_PERF_OUTPUT(net_events, 1024);
 #define TC_ACT_RECLASSIFY	1
 #define TC_ACT_SHOT		    2
 
-struct NetworkEvent {
+struct proc_ctx {
+    __u64 mntns_id;
+    __u32 netns_id;
+    __u32 pid;
+    __u32 tid;
+    __u32 uid;
+    __u32 gid;
+    __u8 comm[TASK_COMM_LEN];
+};
+
+struct network_ctx {
     bool ingress;
     uint32_t pid;
     uint32_t protocol;
     uint32_t ifindex;
-    struct in6_addr src_addr;
-    struct in6_addr dst_addr;
-    uint32_t src_port;
-    uint32_t dst_port;
+    uint32_t local_address;
+    uint32_t remote_address;
+    struct in6_addr local_address_v6;
+    struct in6_addr remote_address_v6;
+    uint32_t local_port;
+    uint32_t remote_port;
     uint32_t packet_size;
     uint64_t timestamp;
+
+    struct proc_ctx socket_proc;
 };
 
 #endif /* TRACEENGIN_H */

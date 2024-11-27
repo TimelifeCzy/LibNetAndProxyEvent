@@ -14,7 +14,7 @@ struct {
     __uint(type, BPF_MAP_TYPE_HASH);
     __uint(max_entries, 10240);
     __type(key, uint64_t);
-    __type(value, struct NetworkEvent);
+    __type(value, struct network_ctx);
 } networkMap SEC(".maps");
 
 #endif

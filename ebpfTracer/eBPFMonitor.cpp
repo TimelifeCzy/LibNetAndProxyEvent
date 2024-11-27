@@ -1,8 +1,10 @@
 #include "Utiliy.h"
 
 #include "traceEngin.skel.h"
-#include "eBPFMonitor.h"
+
+#include "eBPFTraceEngine.h"
 #include "TaskHandler.h"
+#include "eBPFMonitor.h"
 
 #include <thread>
 
@@ -11,13 +13,21 @@ void* eBPFMonitor::EbpfTraceEventThread(void* thread_args)
     // struct TraceEnginConfiguration* config = (struct TraceEnginConfiguration*)thread_args;
     // if (!config || (config == nullptr))
     //     return nullptr;
+
+    traceEngin* skle = (traceEngin*)SingleeBPFTraceEngine::instance()->GetSkel();
+    if (!skle || (skle == nullptr)) {
+        return nullptr;
+    }
+
+    // perf_buffer__new
+    
     while (1) {
         if (SingleeBPFMonitor::instance()->GetStopStu())
             break;
 
-        
-        // sleep thread for 10ms
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // perf_buffer__poll(pb, 100);
+
+        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     return nullptr;
 }

@@ -13,6 +13,8 @@ public:
     void StopRestrack();
     const bool RunRestrack(struct TraceEnginConfiguration* config);
 
+    void* GetSkel() { return (void*)m_skel; }
+
 private:
     struct traceEngin* m_skel = nullptr;
 };
