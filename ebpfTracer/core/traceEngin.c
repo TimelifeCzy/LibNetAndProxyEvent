@@ -1,5 +1,3 @@
-#include "vmlinux.h"
-
 // #include <linux/bpf.h>
 // #include <stdbool.h>
 // #include <stddef.h>
@@ -11,9 +9,9 @@
 // #include <linux/tcp.h>
 // #include <linux/udp.h>
 // #include <net.h>
-
-#include <bpf/bpf_helpers.h>
+#include "vmlinux.h"
 #include <bpf/bpf_endian.h>
+#include <bpf/bpf_helpers.h>
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_tracing.h>
 
@@ -22,46 +20,50 @@
 
 #include <string.h>
 
-// inline int ip_str_to_value(int type, char* ip)
-// {
-//     struct in_addr s;
-//     inet_pton(type, ip, (void*)&s);
-//     return s.s_addr;
-// }
+/*
+inline int ip_str_to_value(int type, char* ip)
+{
+    struct in_addr s;
+    inet_pton(type, ip, (void*)&s);
+    return s.s_addr;
+}
 
-// inline void ip_value_to_str(int type, int ip, char* result, int size)
-// {
-//     inet_ntop(type, (void*)&ip, result, size);
-// }
+inline void ip_value_to_str(int type, int ip, char* result, int size)
+{
+    inet_ntop(type, (void*)&ip, result, size);
+}
+*/
 
-// __attribute__((always_inline))
-// static void get_socket_proc(
-//     struct proc_ctx* proc,
-//     const struct sock* sk)
-// {
-//     __u32 netns_id = 0;
-//     struct sockets_value* skb_val = NULL;
+/*
+__attribute__((always_inline))
+static void get_socket_proc(
+    struct proc_ctx* proc,
+    const struct sock* sk)
+{
+    __u32 netns_id = 0;
+    struct sockets_value* skb_val = NULL;
 
-//     BPF_CORE_READ_INTO(&netns_id, sk, __sk_common.skc_net.net, ns.inum);
-//     skb_val = gadget_socket_lookup(sk, netns_id);
-//     if (!skb_val) {
-//         bpf_printk("WARN: socket %p and netns_id %u not found in "
-//             "socket enricher",
-//             sk, netns_id);
-//         return;
-//     }
+    BPF_CORE_READ_INTO(&netns_id, sk, __sk_common.skc_net.net, ns.inum);
+    skb_val = gadget_socket_lookup(sk, netns_id);
+    if (!skb_val) {
+        bpf_printk("WARN: socket %p and netns_id %u not found in "
+            "socket enricher",
+            sk, netns_id);
+        return;
+    }
 
-//     proc->pid = skb_val->pid_tgid >> 32;
-//     proc->tid = skb_val->pid_tgid;
+    proc->pid = skb_val->pid_tgid >> 32;
+    proc->tid = skb_val->pid_tgid;
 
-//     proc->gid = skb_val->uid_gid >> 32;
-//     proc->uid = skb_val->uid_gid;
+    proc->gid = skb_val->uid_gid >> 32;
+    proc->uid = skb_val->uid_gid;
 
-//     __builtin_memcpy(proc->comm, skb_val->task, sizeof(proc->comm));
+    __builtin_memcpy(proc->comm, skb_val->task, sizeof(proc->comm));
 
-//     proc->mntns_id = skb_val->mntns;
-//     proc->netns_id = netns_id;
-// }
+    proc->mntns_id = skb_val->mntns;
+    proc->netns_id = netns_id;
+}
+*/
 
 __attribute__((always_inline))
 static bool skb_revalidate_data(struct __sk_buff* skb, uint8_t** head, uint8_t** tail, const __u32 offset)
@@ -163,14 +165,14 @@ static int parse_packet_tc(struct __sk_buff* skb, bool ingress)
     bpf_perf_event_output(skb, &net_events, BPF_F_CURRENT_CPU, &net_ctx, pkt_size);
 
     if (type == ETH_P_IP) {
-        const char chproto[5] = { 0, };
-        if (IPPROTO_UDP == net_ctx.protocol)
-            memcpy((void *)chproto,"UDP", 4);
-        else
-            memcpy((void*)chproto, "TCP", 4);
-        const int pid = bpf_get_current_pid_tgid() >> 32;
-        const char fmt_str[] = "[eBPF network] proto %d, %s \n";
-        bpf_trace_printk(fmt_str, sizeof(fmt_str), pid, chproto);
+        // const char chproto[5] = { 0, };
+        // if (IPPROTO_UDP == net_ctx.protocol)
+        //     memcpy((void *)chproto,"UDP", 4);
+        // else
+        //     memcpy((void*)chproto, "TCP", 4);
+        // const int pid = bpf_get_current_pid_tgid() >> 32;
+        // const char fmt_str[] = "[eBPF network] proto %d, %s \n";
+        // bpf_trace_printk(fmt_str, sizeof(fmt_str), pid, chproto);
     }
     return TC_ACT_UNSPEC;
 };
@@ -195,9 +197,12 @@ int classifier_egress(struct __sk_buff* skb)
     return 0;
 }
 
+/*
 SEC("kprobe/tcp_v4_send_reset")
 int kprobe_tcp_v4_send_reset(struct pt_regs* ctx)
 {
+    if (ctx == NULL || (!ctx))
+        return 0;
     struct sock* sk = NULL;
     struct network_ctx net_ctx = { 0, };
     sk = (struct sock*)PT_REGS_PARM1(ctx);
@@ -233,41 +238,135 @@ int kprobe_tcp_v4_send_reset(struct pt_regs* ctx)
     }
     else
     {
+        const char fmt_str[] = "[eBPF kprobe] tcp v4 send reset PT_REGS_PARM1 error.\n";
+        bpf_trace_printk(fmt_str, sizeof(fmt_str));
         struct sk_buff* skb = (struct sk_buff*)PT_REGS_PARM2(ctx);
     }
     return 0;
 }
+*/
 
-SEC("kprobe/tcp_v4_rcv")
-int kprobe_tcp_v4_rcv(struct pt_regs* ctx)
+SEC("kprobe/ping_v4_sendmsg")
+int BPF_KPROBE(trace_ping_v4_sendmsg)
 {
-    struct sk_buff* skb = (struct sk_buff*)PT_REGS_PARM1(ctx);
-    struct tcphdr* th;
-    unsigned short dest;
-    char msg[] = "hello world! My dest is %u\n";
-    bpf_probe_read(&th, sizeof(struct tcphdr*), &(skb->data));
-    // bpf_probe_read(th, sizeof(struct tcphdr *), (skb->data)); Wrong! idk why.
-    bpf_probe_read(&dest, sizeof(unsigned short), &(th->dest));
-    bpf_trace_printk(msg, sizeof(msg), bpf_ntohs(dest));
+    struct network_ctx net_ctx = { 0, };
+    net_ctx.protocol = IPPROTO_ICMP;
+
+    struct sock* sk = NULL;
+    struct inet_sock* inet = NULL;
+    struct msghdr* msg = NULL;
+    struct sockaddr_in* addr = NULL;
+    
+    sk = (struct sock*)PT_REGS_PARM1(ctx);
+    if(!sk || (NULL == sk))
+        return 0;
+    inet = (struct inet_sock *) sk;
+    if(!inet || (NULL == inet))
+        return 0;
+    net_ctx.local_port = BPF_CORE_READ(inet, inet_sport);
+
+    msg = (struct msghdr*)PT_REGS_PARM2(ctx);
+    if (!msg || (NULL == msg))
+        return 0; 
+    addr = (struct sockaddr_in*)READ_KERN(msg->msg_name);
+    if (!addr || (NULL == addr))
+        return 0; 
+    net_ctx.local_address = READ_KERN(addr->sin_addr).s_addr;
+
+    const int pid = bpf_get_current_pid_tgid() >> 32;
+    const char fmt_str[] = "[eBPF kp] ping v4 pid %d ping %u:%d.\n";
+    bpf_trace_printk(fmt_str, sizeof(fmt_str), pid, net_ctx.local_address, net_ctx.local_port);
+
     return 0;
 }
 
-// SEC("tracepoint/syscalls/sys_enter_execve")
-// int tp_syscalls_sysentrywrite(struct syscall_enter_args* ctx)
-// {
-//     const int pid = bpf_get_current_pid_tgid() >> 32;
-//     const char fmt_str[] = "[eBPF sys_enter_execve] triggered from PID %d.\n";
-//     bpf_trace_printk(fmt_str, sizeof(fmt_str), pid);
-//     return 0;
-// }
+/*
+SEC("kretprobe/tcp_v4_rcv")
+int tcp_v4_rcv_ret(struct pt_regs* ctx) {
+    if (ctx == NULL || (!ctx))
+        return 0;
+    do
+    {
+        struct sk_buff* skb = (struct sk_buff*)PT_REGS_PARM1(ctx);
+        if (!skb || (skb == NULL))
+            break;
 
-// SEC("tracepoint/syscalls/sys_exit_execve")
-// int sys_exit_execve(void* ctx)
-// {
-//     const int pid = bpf_get_current_pid_tgid() >> 32;
-//     const char fmt_str[] = "[eBPF sys_exit_execve] triggered from PID %d.\n";
-//     bpf_trace_printk(fmt_str, sizeof(fmt_str), pid);
-//     return 0;
-// }
+        // get skb info
+        const u64 time = bpf_ktime_get_ns();
+        const int pid = bpf_get_current_pid_tgid() >> 32;
+        const char fmt_str[] = "[eBPF kp] tcp v4 rcv pid %d time %llu.\n";
+        bpf_trace_printk(fmt_str, sizeof(fmt_str), pid, time);
+    } while (false);
+
+    return 0;
+}
+
+SEC("kretprobe/tcp_v6_rcv")
+int tcp_v6_rcv_ret(struct pt_regs* ctx) {
+    if (ctx == NULL || (!ctx))
+        return 0;
+    do
+    {
+        struct sk_buff* skb = (struct sk_buff*)PT_REGS_PARM1(ctx);
+        if (!skb || (skb == NULL))
+            break;
+
+        // get skb info
+        const u64 time = bpf_ktime_get_ns();
+        const int pid = bpf_get_current_pid_tgid() >> 32;
+        const char fmt_str[] = "[eBPF kp] tcp v6 rcv pid %d time %llu.\n";
+        bpf_trace_printk(fmt_str, sizeof(fmt_str), pid, time);
+    } while (false);
+
+    return 0;
+}
+*/
+
+/*
+SEC("tracepoint/syscalls/sys_enter_execve")
+int tp_syscalls_sysentrywrite(struct syscall_enter_args* ctx)
+{
+    const int pid = bpf_get_current_pid_tgid() >> 32;
+    const char fmt_str[] = "[eBPF sys_enter_execve] triggered from PID %d.\n";
+    bpf_trace_printk(fmt_str, sizeof(fmt_str), pid);
+    return 0;
+}
+
+SEC("tracepoint/syscalls/sys_exit_execve")
+int tp_sys_exit_execve(void* ctx)
+{
+    const int pid = bpf_get_current_pid_tgid() >> 32;
+    const char fmt_str[] = "[eBPF sys_exit_execve] triggered from PID %d.\n";
+    bpf_trace_printk(fmt_str, sizeof(fmt_str), pid);
+    return 0;
+}
+
+SEC("tracepoint/sched/sched_process_fork")
+int tp_sched_process_fork(struct trace_event_raw_sched_process_fork* ctx) {
+    if (ctx == NULL || (!ctx)) 
+        return 0;
+    const int pid = ctx->parent_pid;
+    const char fmt_str[] = "[eBPF tp sched] process fork pid %d.\n";
+    bpf_trace_printk(fmt_str, sizeof(fmt_str), pid);    
+    return 0;
+}
+
+SEC("tp/sched/sched_process_exit")
+int handle_exit(struct trace_event_raw_sched_process_template* ctx)
+{
+    if (ctx == NULL || (!ctx))
+        return 0;
+    struct task_struct* task = NULL;
+    task = (struct task_struct*)bpf_get_current_task();
+    if (task == NULL || (!task))
+        return 0;
+    const int pid = bpf_get_current_pid_tgid() >> 32;
+    const int ppid = BPF_CORE_READ(task, real_parent, pid);
+    const int exit_code = (BPF_CORE_READ(task, exit_code) >> 8) & 0xff;
+    const char fmt_str[] = "[eBPF tp sched] process exit pid %d exitcode %d.\n";
+    bpf_trace_printk(fmt_str, sizeof(fmt_str), pid, exit_code);
+    return 0;
+}
+*/
 
 char LICENSE[] SEC("license") = "GPL";

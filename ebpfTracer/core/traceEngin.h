@@ -4,24 +4,6 @@
 #define MAX_PERCPU_BUFSIZE      (1 << 15)
 #define TASK_COMM_LEN           16
 
-// https://blog.aquasec.com/ebf-portable-code
-#ifndef CORE
-#define GET_FIELD_ADDR(field) &field
-#define READ_KERN(ptr)                                                         \
-    ({                                                                         \
-        typeof(ptr) _val;                                                      \
-        __builtin_memset((void *)&_val, 0, sizeof(_val));                      \
-        bpf_probe_read((void *)&_val, sizeof(_val), &ptr);                     \
-        _val;                                                                  \
-    })
-#define READ_USER(ptr)                                                         \
-    ({                                                                         \
-        typeof(ptr) _val;                                                      \
-        __builtin_memset((void *)&_val, 0, sizeof(_val));                      \
-        bpf_probe_read_user((void *)&_val, sizeof(_val), &ptr);                \
-        _val;                                                                  \
-    })
-#else // CORE
 #define GET_FIELD_ADDR(field) __builtin_preserve_access_index(&field)
 #define READ_KERN(ptr)                                                         \
     ({                                                                         \
@@ -37,7 +19,6 @@
         bpf_core_read_user((void *)&_val, sizeof(_val), &ptr);                 \
         _val;                                                                  \
     })
-#endif
 
 /* map macro defination */
 #define BPF_MAP(_name, _type, _key_type, _value_type, _max_entries)            \

@@ -1,5 +1,5 @@
 directory="/project/LibNetAndProxyEvent/ebpfTracer/core/"
-clang -O2 -g -I "../../include" -target bpf -D __TARGET_ARCH_x86 -fno-stack-protector -c "${directory}traceEngin.c" -o "traceEngin.ebpf.o"
+clang -O2 -g -I "../../include" -target bpf -D __KERNEL__ -D __TARGET_ARCH_x86 -D __BPF_TRACING__ -D __linux__ -fno-stack-protector -c "${directory}traceEngin.c" -o "traceEngin.ebpf.o"
 # bpftool gen object traceEngin.ebpf.o traceEngin.o
 bpftool gen skeleton "traceEngin.ebpf.o" name "traceEngin" > "traceEngin.skel.h"
 cp traceEngin.skel.h ../../include
