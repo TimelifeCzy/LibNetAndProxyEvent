@@ -7,6 +7,7 @@ public:
     ~eBPFMonitor();
 
 public:
+    static struct perf_buffer* m_pb;
     static void* EbpfTraceEventThread(void* thread_args);
 
 public:

@@ -23,6 +23,12 @@
 #define NF_MAX_IP_ADDRESS_LENGTH	16
 #define MAX_TRIGGERS 10
 
+#define PERF_BUFFER_PAGES       64
+#define PERF_BUFFER_TIME_MS     10
+/* Set the poll timeout when no events occur. This can affect -d accuracy. */
+#define PERF_POLL_TIMEOUT_MS    100
+#define NSEC_PER_SEC            1000000000ULL
+
 typedef unsigned long long ENDPOINT_ID;
 
 typedef struct _NF_TCP_CONN_INFO

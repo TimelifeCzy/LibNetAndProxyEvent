@@ -1,5 +1,5 @@
 #include "Utiliy.h"
-
+#include "bpf/libbpf.h"
 #include "traceEngin.skel.h"
 
 #include "eBPFTraceEngine.h"
@@ -8,27 +8,107 @@
 
 #include <thread>
 
+struct perf_buffer* eBPFMonitor::m_pb = nullptr;
+
+void perf_event(void* ctx, int cpu, void* data, __u32 data_sz)
+{
+    // const struct event* e = data;
+    // if (!e)
+    //     return;
+    
+    // int fd, err;
+    // int sps_cnt;
+    // time_t t;
+    // char ts[32] = { 0, };
+
+    // /* name filtering is currently done in user space */
+    // e->comm;
+
+    // /* prepare fields */
+    // struct tm* tm = nullptr;
+    // time(&t);
+    // tm = localtime(&t);
+    // strftime(ts, sizeof(ts), "%H:%M:%S", tm);
+    // if (e->ret >= 0) {
+    //     fd = e->ret;
+    //     err = 0;
+    // }
+    // else {
+    //     fd = -1;
+    //     err = -e->ret;
+    // }
+
+    // /* print output */
+    // sps_cnt = 0;
+    // if (env.timestamp) {
+    //     printf("%-8s ", ts);
+    //     sps_cnt += 9;
+    // }
+    // if (env.print_uid) {
+    //     printf("%-7d ", e->uid);
+    //     sps_cnt += 8;
+    // }
+    // printf("%-6d %-16s %3d %3d ", e->pid, e->comm, fd, err);
+    // sps_cnt += 7 + 17 + 4 + 4;
+    // if (env.extended) {
+    //     printf("%08o ", e->flags);
+    //     sps_cnt += 9;
+    // }
+    // printf("%s\n", e->fname);
+}
+
+void perf_lost_events(void* ctx, int cpu, __u64 lost_cnt)
+{
+    fprintf(stderr, "Lost %llu events on CPU #%d!\n", lost_cnt, cpu);
+}
+
 void* eBPFMonitor::EbpfTraceEventThread(void* thread_args)
 {
     // struct TraceEnginConfiguration* config = (struct TraceEnginConfiguration*)thread_args;
     // if (!config || (config == nullptr))
     //     return nullptr;
 
-    traceEngin* skle = (traceEngin*)SingleeBPFTraceEngine::instance()->GetSkel();
-    if (!skle || (skle == nullptr)) {
+    traceEngin* skel = (traceEngin*)SingleeBPFTraceEngine::instance()->GetSkel();
+    if (!skel || (skel == nullptr)) {
         return nullptr;
     }
 
-    // perf_buffer__new
+    eBPFMonitor::m_pb = perf_buffer__new(
+        bpf_map__fd(skel->maps.net_events),
+        PERF_BUFFER_PAGES,
+        perf_event,
+        perf_lost_events,
+        NULL,
+        NULL
+    );
+
+    if (!eBPFMonitor::m_pb || (nullptr == eBPFMonitor::m_pb)) {
+        return nullptr;
+    }
     
+    int err = 0;
     while (1) {
         if (SingleeBPFMonitor::instance()->GetStopStu())
             break;
 
-        // perf_buffer__poll(pb, 100);
+        if (!eBPFMonitor::m_pb || (nullptr == eBPFMonitor::m_pb))
+            break;
 
-        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        err = perf_buffer__poll(eBPFMonitor::m_pb, PERF_POLL_TIMEOUT_MS);
+        if (err < 0 && err != -EINTR)
+            break;
+        err = 0;
     }
+
+    if (eBPFMonitor::m_pb) {
+        perf_buffer__free(eBPFMonitor::m_pb);
+        eBPFMonitor::m_pb = nullptr;
+    }
+
+    // send single
+    const int pid = getpid();
+    kill(pid, SIGINT);
+
     return nullptr;
 }
 

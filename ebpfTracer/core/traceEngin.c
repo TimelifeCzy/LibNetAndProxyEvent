@@ -34,37 +34,6 @@ inline void ip_value_to_str(int type, int ip, char* result, int size)
 }
 */
 
-/*
-__attribute__((always_inline))
-static void get_socket_proc(
-    struct proc_ctx* proc,
-    const struct sock* sk)
-{
-    __u32 netns_id = 0;
-    struct sockets_value* skb_val = NULL;
-
-    BPF_CORE_READ_INTO(&netns_id, sk, __sk_common.skc_net.net, ns.inum);
-    skb_val = gadget_socket_lookup(sk, netns_id);
-    if (!skb_val) {
-        bpf_printk("WARN: socket %p and netns_id %u not found in "
-            "socket enricher",
-            sk, netns_id);
-        return;
-    }
-
-    proc->pid = skb_val->pid_tgid >> 32;
-    proc->tid = skb_val->pid_tgid;
-
-    proc->gid = skb_val->uid_gid >> 32;
-    proc->uid = skb_val->uid_gid;
-
-    __builtin_memcpy(proc->comm, skb_val->task, sizeof(proc->comm));
-
-    proc->mntns_id = skb_val->mntns;
-    proc->netns_id = netns_id;
-}
-*/
-
 __attribute__((always_inline))
 static bool skb_revalidate_data(struct __sk_buff* skb, uint8_t** head, uint8_t** tail, const __u32 offset)
 {
@@ -84,6 +53,9 @@ static bool skb_revalidate_data(struct __sk_buff* skb, uint8_t** head, uint8_t**
 __attribute__((always_inline))
 static int parse_packet_tc(struct __sk_buff* skb, bool ingress)
 {
+    if(!skb || (NULL == skb))
+        return 0;
+    
     // packet pre check
     uint8_t* packet_start = (uint8_t*)(long)skb->data;
     uint8_t* packet_end = (uint8_t*)(long)skb->data_end;
@@ -93,9 +65,6 @@ static int parse_packet_tc(struct __sk_buff* skb, bool ingress)
     struct ethhdr* eth = (struct ethhdr*)packet_start;
     if(!eth || (NULL == eth))
         return TC_ACT_UNSPEC;
-    
-    // char ch_srcaddress[INET6_ADDRSTRLEN] = { 0, };
-    // char ch_destaddress[INET6_ADDRSTRLEN] = { 0, };
 
     // get ip hdr packet
     uint32_t hdr_off_len = 0;
@@ -111,9 +80,6 @@ static int parse_packet_tc(struct __sk_buff* skb, bool ingress)
         net_ctx.local_address = ip->saddr;
         net_ctx.remote_address = ip->daddr;
         net_ctx.protocol = ip->protocol;
-
-        // inet_ntop(AF_INET, ip->saddr, ch_srcaddress, sizeof(ch_srcaddress));
-        // inet_ntop(AF_INET, ip->daddr, ch_destaddress, sizeof(ch_destaddress));
     }
     else if( type == ETH_P_IPV6) {
         hdr_off_len = sizeof(struct ethhdr) + sizeof(struct ipv6hdr);
@@ -125,9 +91,6 @@ static int parse_packet_tc(struct __sk_buff* skb, bool ingress)
         net_ctx.local_address_v6 = ip6->saddr;
         net_ctx.remote_address_v6 = ip6->daddr;
         net_ctx.protocol = ip6->nexthdr;
-        
-        // inet_ntop(AF_INET6, &ip6->saddr, ch_srcaddress, sizeof(ch_srcaddress));
-        // inet_ntop(AF_INET6, &ip6->daddr, ch_destaddress, sizeof(ch_destaddress));
     }
     else
         return TC_ACT_UNSPEC;
@@ -154,7 +117,6 @@ static int parse_packet_tc(struct __sk_buff* skb, bool ingress)
     else
         return TC_ACT_UNSPEC;
 
-    //const int pid = bpf_get_current_pid_tgid() >> 32;
     net_ctx.pid = 0;
     net_ctx.ingress = ingress;
     net_ctx.packet_size = skb->len;
@@ -162,17 +124,26 @@ static int parse_packet_tc(struct __sk_buff* skb, bool ingress)
     net_ctx.timestamp = bpf_ktime_get_ns();
     
     const size_t pkt_size = sizeof(net_ctx);
-    bpf_perf_event_output(skb, &net_events, BPF_F_CURRENT_CPU, &net_ctx, pkt_size);
+    bpf_perf_event_output(skb, &eventMap, BPF_F_CURRENT_CPU, &net_ctx, pkt_size);
 
     if (type == ETH_P_IP) {
-        // const char chproto[5] = { 0, };
-        // if (IPPROTO_UDP == net_ctx.protocol)
-        //     memcpy((void *)chproto,"UDP", 4);
-        // else
-        //     memcpy((void*)chproto, "TCP", 4);
-        // const int pid = bpf_get_current_pid_tgid() >> 32;
-        // const char fmt_str[] = "[eBPF network] proto %d, %s \n";
-        // bpf_trace_printk(fmt_str, sizeof(fmt_str), pid, chproto);
+        const char fmt_str[] = "[eBPF tc] %s";
+        const char fmt_str_local[] = " local: %u:%d\t";
+        const char fmt_str_remote[] = "remote: %u:%d\n";
+        if (IPPROTO_UDP == net_ctx.protocol) {
+            const char chproto[] = "UDP";
+            bpf_trace_printk(fmt_str, sizeof(fmt_str), chproto);
+        }
+        else if(IPPROTO_TCP == net_ctx.protocol){
+            const char chproto[] = "TCP";
+            bpf_trace_printk(fmt_str, sizeof(fmt_str), chproto);
+        }
+        else {
+            const char chproto[] = "Unknown";
+            bpf_trace_printk(fmt_str, sizeof(fmt_str), chproto);
+        }
+        bpf_trace_printk(fmt_str_local, sizeof(fmt_str_local), net_ctx.local_address, net_ctx.local_port);
+        bpf_trace_printk(fmt_str_remote, sizeof(fmt_str_remote), net_ctx.remote_address, net_ctx.remote_port);
     }
     return TC_ACT_UNSPEC;
 };
@@ -246,9 +217,12 @@ int kprobe_tcp_v4_send_reset(struct pt_regs* ctx)
 }
 */
 
+/*
 SEC("kprobe/ping_v4_sendmsg")
 int BPF_KPROBE(trace_ping_v4_sendmsg)
 {
+    if(!ctx || (NULL==ctx))
+        return 0;
     struct network_ctx net_ctx = { 0, };
     net_ctx.protocol = IPPROTO_ICMP;
 
@@ -279,6 +253,7 @@ int BPF_KPROBE(trace_ping_v4_sendmsg)
 
     return 0;
 }
+*/
 
 /*
 SEC("kretprobe/tcp_v4_rcv")
